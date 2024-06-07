@@ -700,7 +700,10 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         {
             try
             {
-                CheckConnected("MinSwitchValue");
+                // The focal length constraints are defined in software, so we don't need to
+                // check with the SwitchHardware.
+                //CheckConnected("MinSwitchValue");
+                
                 LogMessage("MinSwitchValue", $"Calling method.");
                 double maxSwitchValue = SwitchHardware.MinSwitchValue(id);
                 LogMessage("MinSwitchValue", maxSwitchValue.ToString());

@@ -11,6 +11,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Windows.Forms;
 using ASCOM;
 using ASCOM.Astrometry;
@@ -24,6 +25,8 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
     //
     // TODO Replace the not implemented exceptions with code to implement the function or throw the appropriate ASCOM exception.
     //
+
+    
 
     /// <summary>
     /// ASCOM Switch hardware class for LiamDaviesSprinterDFL.
@@ -45,6 +48,59 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static Util utilities; // ASCOM Utilities object for use as required
         internal static AstroUtils astroUtilities; // ASCOM AstroUtilities object for use as required
         internal static TraceLogger tl; // Local server's trace logger object for diagnostic log with information that you specify
+
+        public class SwitchData
+        {
+            public short SwitchID;
+            public string SwitchName;
+            public string SwitchDescription;
+            public bool isBool;
+            public bool isWritable;
+            public double minValue;
+            public double maxValue;
+
+            public SwitchData(short switchID, string switchName, string switchDescription, bool isBool, bool isWritable, double minValue, double maxValue)
+            {
+                SwitchID = switchID;
+                SwitchName = switchName;
+                SwitchDescription = switchDescription;
+                this.isBool = isBool;
+                this.isWritable = isWritable;
+                this.minValue = minValue;
+                this.maxValue = maxValue;
+            }
+        }
+
+        private static readonly SwitchData FocalLengthData = new SwitchData(
+            0,
+            "Focal Length",
+            "Controls the Focal Length of the Sprinter DFL System.",
+            false,
+            true,
+            24,
+            105
+        );
+        private static readonly SwitchData FocalLengthEndstop = new SwitchData(
+            0,
+            "Focal Length Endstop",
+            "Determines if the Sprinter DFL's Focal Length is at an endstop.",
+            true,
+            false,
+            0,
+            1
+        );
+        private static readonly SwitchData IsMoving = new SwitchData(
+            0,
+            "DFL Moving",
+            "Shows whether the Focal Length system is currently moving.",
+            true,
+            false,
+            0,
+            1
+        );
+
+        private static SwitchData[] switches = {FocalLengthData, FocalLengthEndstop};
+
 
         /// <summary>
         /// Initializes a new instance of the device Hardware class.
@@ -360,7 +416,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // TODO customise this device name as required
             get
             {
-                string name = "Short driver name - please customise";
+                string name = "Sprinter DFL";
                 LogMessage("Name Get", name);
                 return name;
             }
@@ -370,7 +426,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 
         #region ISwitchV2 Implementation
 
-        private static short numSwitch = 0;
+        private static short numSwitch = (short)switches.Length;
 
         /// <summary>
         /// The number of switches managed by this driver
@@ -393,8 +449,8 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static string GetSwitchName(short id)
         {
             Validate("GetSwitchName", id);
-            LogMessage("GetSwitchName", $"GetSwitchName({id}) - not implemented");
-            throw new MethodNotImplementedException("GetSwitchName");
+            //LogMessage("GetSwitchName", $"GetSwitchName({id}) - not implemented");
+            return switches[id].SwitchName;
         }
 
         /// <summary>
@@ -420,8 +476,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static string GetSwitchDescription(short id)
         {
             Validate("GetSwitchDescription", id);
-            LogMessage("GetSwitchDescription", $"GetSwitchDescription({id}) - not implemented");
-            throw new MethodNotImplementedException("GetSwitchDescription");
+            //LogMessage("GetSwitchDescription", $"GetSwitchDescription({id}) - not implemented");
+            //throw new MethodNotImplementedException("GetSwitchDescription");
+            return switches[id].SwitchDescription;
         }
 
         /// <summary>
@@ -438,7 +495,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             Validate("CanWrite", id);
             // default behavour is to report true
             LogMessage("CanWrite", $"CanWrite({id}): {writable}");
-            return true;
+            return switches[id].isWritable;
         }
 
         #region Boolean switch members
@@ -485,8 +542,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static double MaxSwitchValue(short id)
         {
             Validate("MaxSwitchValue", id);
-            LogMessage("MaxSwitchValue", $"MaxSwitchValue({id}) - not implemented");
-            throw new MethodNotImplementedException("MaxSwitchValue");
+            //LogMessage("MaxSwitchValue", $"MaxSwitchValue({id}) - not implemented");
+            // Example value to begin with.
+            return 105.00;
         }
 
         /// <summary>
@@ -497,8 +555,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static double MinSwitchValue(short id)
         {
             Validate("MinSwitchValue", id);
-            LogMessage("MinSwitchValue", $"MinSwitchValue({id}) - not implemented");
-            throw new MethodNotImplementedException("MinSwitchValue");
+            // LogMessage("MinSwitchValue", $"MinSwitchValue({id}) - not implemented");
+            // Example value to begin with.
+            return 24.00;
         }
 
         /// <summary>
@@ -522,8 +581,15 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static double GetSwitchValue(short id)
         {
             Validate("GetSwitchValue", id);
-            LogMessage("GetSwitchValue", $"GetSwitchValue({id}) - not implemented");
-            throw new MethodNotImplementedException("GetSwitchValue");
+            // Example Value
+            if(id == 0)
+            {
+                return 24.00;
+            } else
+            {
+                return 1;
+            }
+            
         }
 
         /// <summary>
@@ -539,8 +605,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 LogMessage("SetSwitchValue", $"SetSwitchValue({id}) - Cannot write");
                 throw new ASCOM.MethodNotImplementedException($"SetSwitchValue({id}) - Cannot write");
             }
-            LogMessage("SetSwitchValue", $"SetSwitchValue({id}) = {value} - not implemented");
-            throw new MethodNotImplementedException("SetSwitchValue");
+
+            //LogMessage("SetSwitchValue", $"SetSwitchValue({id}) = {value} - not implemented");
+            //throw new MethodNotImplementedException("SetSwitchValue");
         }
 
         #endregion
