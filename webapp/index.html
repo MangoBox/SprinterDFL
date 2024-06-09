@@ -34,7 +34,8 @@
     <script type="module">
         import { Viewer } from '@photo-sphere-viewer/core';
         import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
-    
+        import 'https://cdn.jsdelivr.net/npm/@theatre/browser-bundles@0.5.0-insiders.88df1ef/dist/core-and-studio.js'
+
         const viewer = new Viewer({
             container: document.querySelector('#viewer'),
             panorama: 'starmap_2020_8k.png',
@@ -42,7 +43,7 @@
                 [MarkersPlugin, {
                     markers: [
                         {
-                            id: 'polygon-1',
+                            id: 'frame',
                             polygon: [
                                 [0,0], [1,0], [1,1], [0,1]
                             ],
@@ -65,11 +66,8 @@
                 }],
             ],
         });
-    </script>
 
-
-    <script type="module">
-      import 'https://cdn.jsdelivr.net/npm/@theatre/browser-bundles@0.5.0-insiders.88df1ef/dist/core-and-studio.js'
+        
         // We can now access Theatre.core and Theatre.studio from here
         const { core, studio } = Theatre
 
@@ -78,18 +76,37 @@
         const project = core.getProject('HTML Animation Tutorial')
         const sheet = project.sheet('Sheet 1')
         const obj = sheet.object('Heading 1', {
-        y: 0, // you can use just a simple default value
-        x: 0 ,
-        opacity: core.types.number(1, { range: [0, 1] }), // or use a type constructor to customize
-        scale: core.types.number(1, { range: [0, 10] })
-        })
+            y: core.types.number(0, { range: [-1, 1] }), // you can use just a simple default value
+            x: core.types.number(0, { range: [-1, 1] }) ,
+            opacity: core.types.number(1, { range: [0, 1] }), // or use a type constructor to customize
+            scale: core.types.number(1, { range: [0, 10] })
+        })  
 
-        const articleHeadingElement = document.getElementById('psv-marker-polygon-1')
+        //const frame = document.getElementById('psv-marker-polygon-1')
 
+        const markersPlugin = viewer.getPlugin(MarkersPlugin);
         obj.onValuesChange((obj) => {
-        articleHeadingElement.style.transform = `translate(${obj.x}px, ${obj.y}px) scale(${obj.scale})`
-        articleHeadingElement.style.opacity = obj.opacity
+            console.log("updated values: ", obj.x, obj.y);
+            console.log("markers: ", markersPlugin.markers);
+            
+            if(Object.hasOwn(markersPlugin.markers, 'frame')) {
+                markersPlugin.updateMarker({
+                    id: 'frame',
+                    polygon: [
+                        [obj.x,obj.y], [1,0], [1,1], [0,1]
+                    ],
+                    
+                }); 
+                console.log("Updated.");
+            }
+        //articleHeadingElement.style.transform = `translate(${obj.x}px, ${obj.y}px) scale(${obj.scale})`
+        //articleHeadingElement.style.opacity = obj.opacity
         })
+    </script>
+
+
+    <script type="module">
+      
     </script>
   </body>
 </html>
