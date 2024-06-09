@@ -24,17 +24,34 @@
         {
             "imports": {
                 "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
-                "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.module.js"
+                "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.module.js",
+                "@photo-sphere-viewer/overlays-plugin": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/overlays-plugin/index.module.js"
             }
         }
     </script>
 
     <script type="module">
         import { Viewer } from '@photo-sphere-viewer/core';
+        import { OverlaysPlugin } from '@photo-sphere-viewer/overlays-plugin';
     
         const viewer = new Viewer({
             container: document.querySelector('#viewer'),
             panorama: 'starmap_2020_8k.png',
+            plugins: [
+                [OverlaysPlugin, {
+                    overlays: [
+                        {
+                            id: 'positionned',
+                            path: 'rectangle.png',
+                            yaw: '-20deg',
+                            pitch: '10deg',
+                            width: '40deg',
+                            height: '20deg',
+                            opacity: 0.5,
+                        },
+                    ],
+                }],
+            ],
         });
     </script>
 
