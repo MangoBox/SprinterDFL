@@ -39,6 +39,8 @@
         const viewer = new Viewer({
             container: document.querySelector('#viewer'),
             panorama: 'starmap_2020_8k.png',
+            maxFov: 150,
+            fisheye: 1,
             plugins: [
                 [MarkersPlugin, {
                     markers: [
@@ -48,9 +50,9 @@
                                 [0,0], [1,0], [1,1], [0,1]
                             ],
                             svgStyle: {
-                                fill: 'rgba(255, 0, 50, 0.8)',
+                                fill: 'rgba(255, 0, 50, 0.0)',
                                 stroke: 'rgba(255, 0, 50, 0.8)',
-                                strokeWidth: '1px',
+                                strokeWidth: '3px',
                             },
                         },
                         // {
@@ -76,8 +78,8 @@
         const project = core.getProject('HTML Animation Tutorial')
         const sheet = project.sheet('Sheet 1')
         const obj = sheet.object('Heading 1', {
-            y: core.types.number(0, { range: [-1, 1] }), // you can use just a simple default value
-            x: core.types.number(0, { range: [-1, 1] }) ,
+            y: core.types.number(0, { range: [-5, 5] }), // you can use just a simple default value
+            x: core.types.number(0, { range: [-5, 5] }) ,
             opacity: core.types.number(1, { range: [0, 1] }), // or use a type constructor to customize
             scale: core.types.number(1, { range: [0, 10] })
         })  
@@ -85,6 +87,7 @@
         //const frame = document.getElementById('psv-marker-polygon-1')
 
         const markersPlugin = viewer.getPlugin(MarkersPlugin);
+
         obj.onValuesChange((obj) => {
             console.log("updated values: ", obj.x, obj.y);
             console.log("markers: ", markersPlugin.markers);
@@ -93,7 +96,7 @@
                 markersPlugin.updateMarker({
                     id: 'frame',
                     polygon: [
-                        [obj.x,obj.y], [1,0], [1,1], [0,1]
+                        [obj.x,obj.y], [obj.x+1,obj.y], [obj.x+1,obj.y+1], [obj.x,obj.y+1]
                     ],
                     
                 }); 
