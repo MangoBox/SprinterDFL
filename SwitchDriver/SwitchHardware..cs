@@ -40,6 +40,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal const string traceStateProfileName = "Trace Level";
         internal const string traceStateDefault = "true";
 
+        internal const string lensSelectedProfileName = "Lens Selected";
+        internal const string lensSelectedDefault = "";
+
         private static string DriverProgId = ""; // ASCOM DeviceID (COM ProgID) for this driver, the value is set by the driver's class initialiser.
         private static string DriverDescription = ""; // The value is set by the driver's class initialiser.
         internal static string comPort; // COM port name (if required)
@@ -48,6 +51,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static Util utilities; // ASCOM Utilities object for use as required
         internal static AstroUtils astroUtilities; // ASCOM AstroUtilities object for use as required
         internal static TraceLogger tl; // Local server's trace logger object for diagnostic log with information that you specify
+        internal static Lens currentLens;
 
         public class SwitchData
         {
@@ -98,8 +102,26 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             0,
             1
         );
+        private static readonly SwitchData MinFocalLength = new SwitchData(
+            0,
+            "Minimum Focal Length",
+            "The minimum focal length of the currently selected DFL Lens",
+            false,
+            false,
+            0,
+            10000
+        );
+        private static readonly SwitchData MaxFocalLength = new SwitchData(
+            0,
+            "Maximum Focal Length",
+            "The maximum focal length of the currently selected DFL Lens",
+            false,
+            false,
+            0,
+            10000
+        );
 
-        private static SwitchData[] switches = {FocalLengthData, FocalLengthEndstop};
+        private static SwitchData[] switches = {FocalLengthData, FocalLengthEndstop, IsMoving, MinFocalLength, MaxFocalLength};
 
 
         /// <summary>
@@ -544,7 +566,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             Validate("MaxSwitchValue", id);
             //LogMessage("MaxSwitchValue", $"MaxSwitchValue({id}) - not implemented");
             // Example value to begin with.
-            return 105.00;
+            return currentLens.maxFocalLength;
         }
 
         /// <summary>
@@ -557,7 +579,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             Validate("MinSwitchValue", id);
             // LogMessage("MinSwitchValue", $"MinSwitchValue({id}) - not implemented");
             // Example value to begin with.
-            return 24.00;
+            return currentLens.minFocalLength;
         }
 
         /// <summary>
@@ -688,6 +710,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 driverProfile.DeviceType = "Switch";
                 tl.Enabled = Convert.ToBoolean(driverProfile.GetValue(DriverProgId, traceStateProfileName, string.Empty, traceStateDefault));
                 comPort = driverProfile.GetValue(DriverProgId, comPortProfileName, string.Empty, comPortDefault);
+                currentLens = LensHandler.GetLensByName(driverProfile.GetValue(DriverProgId, lensSelectedProfileName, string.Empty, LensHandler.lenses[0].name));
             }
         }
 
@@ -701,6 +724,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 driverProfile.DeviceType = "Switch";
                 driverProfile.WriteValue(DriverProgId, traceStateProfileName, tl.Enabled.ToString());
                 driverProfile.WriteValue(DriverProgId, comPortProfileName, comPort.ToString());
+                driverProfile.WriteValue(DriverProgId, lensSelectedProfileName, currentLens.name);
             }
         }
 

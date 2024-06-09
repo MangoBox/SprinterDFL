@@ -43,6 +43,23 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 SwitchHardware.comPort = (string)comboBoxComPort.SelectedItem;
                 tl.LogMessage("Setup OK", $"New configuration values - COM Port: {comboBoxComPort.SelectedItem}");
             }
+
+
+            // Update the Current Lens Variable
+            if (lensComboBox.SelectedItem is null) // No COM port selected
+            {
+            }
+            else if (LensHandler.GetLensByName(lensComboBox.SelectedItem.ToString()) is null) // No COM port selected
+            {
+                // Invalid name.
+            }
+            else
+            {
+                // Valid name.
+                Lens newLens = LensHandler.GetLensByName(lensComboBox.SelectedItem.ToString());
+                SwitchHardware.currentLens = newLens;
+            }
+
         }
 
         private void CmdCancel_Click(object sender, EventArgs e) // Cancel button event handler
@@ -92,6 +109,17 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             {
                 comboBoxComPort.SelectedItem = SwitchHardware.comPort;
             }
+
+            // Fill out the current lens selection.
+            lensComboBox.Items.Clear();
+            lensComboBox.Items.AddRange(LensHandler.GetNames());
+            
+            if(comboBoxComPort.Items.Count != 0)
+            {
+                //Update this with whatever is the last selected index.
+                lensComboBox.SelectedItem = SwitchHardware.currentLens.name;
+            }
+
 
             tl.LogMessage("InitUI", $"Set UI controls to Trace: {chkTrace.Checked}, COM Port: {comboBoxComPort.SelectedItem}");
         }

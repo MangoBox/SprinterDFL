@@ -75,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ClassFactory.cs" />
+    <Compile Include="SwitchDriver\LensHandler.cs" />
     <Compile Include="SwitchDriver\SwitchDriver.cs" />
     <Compile Include="SwitchDriver\SwitchHardware..cs" />
     <Compile Include="frmMain.cs">

@@ -36,7 +36,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             this.label2 = new System.Windows.Forms.Label();
             this.chkTrace = new System.Windows.Forms.CheckBox();
             this.comboBoxComPort = new System.Windows.Forms.ComboBox();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.lensComboBox = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
@@ -114,16 +114,16 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             this.comboBoxComPort.FormattingEnabled = true;
             this.comboBoxComPort.Location = new System.Drawing.Point(77, 112);
             this.comboBoxComPort.Name = "comboBoxComPort";
-            this.comboBoxComPort.Size = new System.Drawing.Size(133, 21);
+            this.comboBoxComPort.Size = new System.Drawing.Size(88, 21);
             this.comboBoxComPort.TabIndex = 7;
             // 
-            // comboBox1
+            // lensComboBox
             // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(77, 85);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(133, 21);
-            this.comboBox1.TabIndex = 8;
+            this.lensComboBox.FormattingEnabled = true;
+            this.lensComboBox.Location = new System.Drawing.Point(77, 85);
+            this.lensComboBox.Name = "lensComboBox";
+            this.lensComboBox.Size = new System.Drawing.Size(231, 21);
+            this.lensComboBox.TabIndex = 8;
             // 
             // label3
             // 
@@ -152,7 +152,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             this.ClientSize = new System.Drawing.Size(350, 243);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.comboBox1);
+            this.Controls.Add(this.lensComboBox);
             this.Controls.Add(this.comboBoxComPort);
             this.Controls.Add(this.chkTrace);
             this.Controls.Add(this.label2);
@@ -183,7 +183,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.CheckBox chkTrace;
         private System.Windows.Forms.ComboBox comboBoxComPort;
-        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.ComboBox lensComboBox;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.CheckBox checkBox1;
     }
