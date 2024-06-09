@@ -93,10 +93,16 @@
             console.log("markers: ", markersPlugin.markers);
             
             if(Object.hasOwn(markersPlugin.markers, 'frame')) {
+
+                var x0 = obj.x - obj.scale/2;
+                var y0 = obj.y - obj.scale/2;
+                var x1 = obj.x + obj.scale/2;
+                var y1 = obj.y   + obj.scale/2;
+
                 markersPlugin.updateMarker({
                     id: 'frame',
                     polygon: [
-                        [obj.x,obj.y], [obj.x+1,obj.y], [obj.x+1,obj.y+1], [obj.x,obj.y+1]
+                        [x0,y0], [x1,y0], [x1,y1], [x0,y1]
                     ],
                     
                 }); 
