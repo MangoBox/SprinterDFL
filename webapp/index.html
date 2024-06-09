@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.min.css" />
+    <link rel="stylesheet" href="/index.css" />
     <title>Theatre.js Tutorial</title>
     <style>
       body {
@@ -25,30 +26,41 @@
             "imports": {
                 "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
                 "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.module.js",
-                "@photo-sphere-viewer/overlays-plugin": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/overlays-plugin/index.module.js"
+                "@photo-sphere-viewer/markers-plugin": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/markers-plugin/index.module.js"
             }
         }
     </script>
 
     <script type="module">
         import { Viewer } from '@photo-sphere-viewer/core';
-        import { OverlaysPlugin } from '@photo-sphere-viewer/overlays-plugin';
+        import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
     
         const viewer = new Viewer({
             container: document.querySelector('#viewer'),
             panorama: 'starmap_2020_8k.png',
             plugins: [
-                [OverlaysPlugin, {
-                    overlays: [
+                [MarkersPlugin, {
+                    markers: [
                         {
-                            id: 'positionned',
-                            path: 'rectangle.png',
-                            yaw: '-20deg',
-                            pitch: '10deg',
-                            width: '40deg',
-                            height: '20deg',
-                            opacity: 0.5,
+                            id: 'polygon-1',
+                            polygon: [
+                                [0,0], [1,0], [1,1], [0,1]
+                            ],
+                            svgStyle: {
+                                fill: 'rgba(255, 0, 50, 0.8)',
+                                stroke: 'rgba(255, 0, 50, 0.8)',
+                                strokeWidth: '1px',
+                            },
                         },
+                        // {
+                        //     // image marker rendered in the 3D scene
+                        //     id: 'imageLayer',
+                        //     imageLayer: 'rectangle.png',
+                        //     size: { width: 1000, height: 200 },
+                        //     position: { yaw: -0.45, pitch: -0.1 },
+                        //     tooltip: 'Image embedded in the scene',
+                        // },
+                        
                     ],
                 }],
             ],
@@ -72,7 +84,7 @@
         scale: core.types.number(1, { range: [0, 10] })
         })
 
-        const articleHeadingElement = document.getElementById('article-heading')
+        const articleHeadingElement = document.getElementById('psv-marker-polygon-1')
 
         obj.onValuesChange((obj) => {
         articleHeadingElement.style.transform = `translate(${obj.x}px, ${obj.y}px) scale(${obj.scale})`
