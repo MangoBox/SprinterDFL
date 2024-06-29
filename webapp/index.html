@@ -38,13 +38,19 @@
 
         studio.initialize() // Start the Theatre.js UI
 
+        // Calculations for focal length and field of view
+        // Test constant values for now
+        const focalLength = [16, 300];
+        const sensorSize = [36e-3, 24e-3];
+
+
         const project = core.getProject('HTML Animation Tutorial')
         const sheet = project.sheet('Sheet 1')
         const obj = sheet.object('Heading 1', {
-            y: core.types.number(0, { range: [-5, 5] }), // you can use just a simple default value
-            x: core.types.number(0, { range: [-5, 5] }) ,
+            dec: core.types.number(0, { range: [-90, 90] }), // you can use just a simple default value
+            ra: core.types.number(0, { range: [-180, 180] }) ,
             opacity: core.types.number(1, { range: [0, 1] }), // or use a type constructor to customize
-            scale: core.types.number(1, { range: [0, 10] })
+            scale: core.types.number(1, { range: [1, 10] })
         })  
 
         let aladin;
@@ -61,7 +67,8 @@
         
         obj.onValuesChange((obj) => {
             if(footprintLayer != undefined) {
-                var corners = [[obj.x, obj.y], [obj.x, obj.y+1], [obj.x+1, obj.y+1], [obj.x+1, obj.y]];
+                var center = [obj.ra, obj.dec];
+                var corners = [[center[0] - obj.scale/2, center[1] - obj.scale/2], [center[0] - obj.scale/2, center[1] + obj.scale/2], [center[0] + obj.scale/2, center[1] + obj.scale/2], [center[0] + obj.scale/2, center[1] - obj.scale/2]];
                 footprintLayer.removeAll();
                 footprintLayer.addFootprints([A.polygon(corners)]);
                 footprintLayer.reportChange();
