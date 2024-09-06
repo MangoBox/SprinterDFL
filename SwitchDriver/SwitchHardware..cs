@@ -55,6 +55,8 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 
         internal static double switchValue;
 
+	internal static SerialPort serialPort;
+
         public class SwitchData
         {
             public short SwitchID;
@@ -65,7 +67,18 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             public double minValue;
             public double maxValue;
 
-            public SwitchData(short switchID, string switchName, string switchDescription, bool isBool, bool isWritable, double minValue, double maxValue)
+	    // Current Values
+	    public double currentValue;
+
+            public SwitchData(
+			    short switchID,
+			    string switchName,
+			    string switchDescription,
+			    bool isBool,
+			    bool isWritable,
+			    double minValue,
+			    double maxValue
+	                     )
             {
                 SwitchID = switchID;
                 SwitchName = switchName;
@@ -75,6 +88,14 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 this.minValue = minValue;
                 this.maxValue = maxValue;
             }
+
+	    public void SetValue(double newValue) {
+	        currentValue = newValue;	
+	    };
+
+	    public double FetchValue() {
+
+	    }
         }
 
         private static readonly SwitchData FocalLengthData = new SwitchData(
@@ -143,6 +164,23 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 
         private static SwitchData[] switches = {FocalLengthData, FocalLengthEndstop, IsMoving, MinFocalLength, MaxFocalLength, DewHeaterPower, SupplyVoltage};
 
+
+	static void ConnectSprinterDFL() {
+		serialPort = new SerialPort();
+		serialPort.PortName = comPort;
+		serialPort.BaudRate = baudRate; // probably 9600
+		// Add other init code here.
+
+		serialPort.ReadTimeout = 1000;
+		serialPort.WriteTimeout = 1000;
+		
+		// Attempt open.
+		serialPort.Open();
+	}
+
+	static void DisconnectSprinterDFL() {
+		serialPort.Close();
+	}
 
         /// <summary>
         /// Initializes a new instance of the device Hardware class.
@@ -380,7 +418,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                     LogMessage("Connected Set", $"Connecting to port {comPort}");
 
                     // TODO insert connect to the device code here
-
+                    ConnectSprinterDFL();
                     connectedState = true;
                 }
                 else
@@ -388,7 +426,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                     LogMessage("Connected Set", $"Disconnecting from port {comPort}");
 
                     // TODO insert disconnect from the device code here
-
+		    DisconnectSprinterDFL();
                     connectedState = false;
                 }
             }
@@ -627,15 +665,6 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             {
                 return switchValue;
             }
-            // Example Value
-            if(id == 0)
-            {
-                return 24.00;
-            } else
-            {
-                return 1;
-            }
-            
         }
 
         /// <summary>
@@ -651,6 +680,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 LogMessage("SetSwitchValue", $"SetSwitchValue({id}) - Cannot write");
                 throw new ASCOM.MethodNotImplementedException($"SetSwitchValue({id}) - Cannot write");
             }
+	    // Focal Length Control
             if(FocalLengthData.SwitchID == id)
             {
                 switchValue = value;
