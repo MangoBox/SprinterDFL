@@ -53,6 +53,8 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static TraceLogger tl; // Local server's trace logger object for diagnostic log with information that you specify
         internal static Lens currentLens;
 
+        internal static double switchValue;
+
         public class SwitchData
         {
             public short SwitchID;
@@ -120,8 +122,26 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             0,
             10000
         );
+        private static readonly SwitchData DewHeaterPower = new SwitchData(
+            1,
+            "Dew Heater Power",
+            "Current dew heater power.",
+            false,
+            true,
+            0,
+            100
+        );
+        private static readonly SwitchData SupplyVoltage = new SwitchData(
+            0,
+            "Supply Voltage",
+            "Current supply voltage of SprinterDFL board.",
+            false,
+            false,
+            0,
+            50
+        );
 
-        private static SwitchData[] switches = {FocalLengthData, FocalLengthEndstop, IsMoving, MinFocalLength, MaxFocalLength};
+        private static SwitchData[] switches = {FocalLengthData, FocalLengthEndstop, IsMoving, MinFocalLength, MaxFocalLength, DewHeaterPower, SupplyVoltage};
 
 
         /// <summary>
@@ -603,6 +623,10 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static double GetSwitchValue(short id)
         {
             Validate("GetSwitchValue", id);
+            if(id == FocalLengthData.SwitchID)
+            {
+                return switchValue;
+            }
             // Example Value
             if(id == 0)
             {
@@ -627,6 +651,12 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 LogMessage("SetSwitchValue", $"SetSwitchValue({id}) - Cannot write");
                 throw new ASCOM.MethodNotImplementedException($"SetSwitchValue({id}) - Cannot write");
             }
+            if(FocalLengthData.SwitchID == id)
+            {
+                switchValue = value;
+            }
+            
+
 
             //LogMessage("SetSwitchValue", $"SetSwitchValue({id}) = {value} - not implemented");
             //throw new MethodNotImplementedException("SetSwitchValue");
