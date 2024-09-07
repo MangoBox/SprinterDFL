@@ -57,47 +57,6 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 
 	internal static SerialPort serialPort;
 
-        public class SwitchData
-        {
-            public short SwitchID;
-            public string SwitchName;
-            public string SwitchDescription;
-            public bool isBool;
-            public bool isWritable;
-            public double minValue;
-            public double maxValue;
-
-	    // Current Values
-	    public double currentValue;
-
-            public SwitchData(
-			    short switchID,
-			    string switchName,
-			    string switchDescription,
-			    bool isBool,
-			    bool isWritable,
-			    double minValue,
-			    double maxValue
-	                     )
-            {
-                SwitchID = switchID;
-                SwitchName = switchName;
-                SwitchDescription = switchDescription;
-                this.isBool = isBool;
-                this.isWritable = isWritable;
-                this.minValue = minValue;
-                this.maxValue = maxValue;
-            }
-
-	    public void SetValue(double newValue) {
-	        currentValue = newValue;	
-	    };
-
-	    public double FetchValue() {
-
-	    }
-        }
-
         private static readonly SwitchData FocalLengthData = new SwitchData(
             0,
             "Focal Length",
@@ -162,8 +121,11 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             50
         );
 
-        private static SwitchData[] switches = {FocalLengthData, FocalLengthEndstop, IsMoving, MinFocalLength, MaxFocalLength, DewHeaterPower, SupplyVoltage};
-
+        private static Controller[] controllers = {
+            new FocalLengthController(0, 16, 300),
+            new DewHeaterPower(1),
+            new SupplyVoltage(1)
+        };
 
 	static void ConnectSprinterDFL() {
 		serialPort = new SerialPort();
@@ -624,7 +586,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             Validate("MaxSwitchValue", id);
             //LogMessage("MaxSwitchValue", $"MaxSwitchValue({id}) - not implemented");
             // Example value to begin with.
-            return currentLens.maxFocalLength;
+            return controllers[id].maxValue;
         }
 
         /// <summary>
@@ -637,7 +599,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             Validate("MinSwitchValue", id);
             // LogMessage("MinSwitchValue", $"MinSwitchValue({id}) - not implemented");
             // Example value to begin with.
-            return currentLens.minFocalLength;
+            return controllers[id].minValue;
         }
 
         /// <summary>
@@ -661,10 +623,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static double GetSwitchValue(short id)
         {
             Validate("GetSwitchValue", id);
-            if(id == FocalLengthData.SwitchID)
-            {
-                return switchValue;
-            }
+            return controllers[id].currentValue;
         }
 
         /// <summary>
@@ -680,13 +639,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 LogMessage("SetSwitchValue", $"SetSwitchValue({id}) - Cannot write");
                 throw new ASCOM.MethodNotImplementedException($"SetSwitchValue({id}) - Cannot write");
             }
-	    // Focal Length Control
-            if(FocalLengthData.SwitchID == id)
-            {
-                switchValue = value;
-            }
-            
-
+            controllers[id].currentValue = value;
 
             //LogMessage("SetSwitchValue", $"SetSwitchValue({id}) = {value} - not implemented");
             //throw new MethodNotImplementedException("SetSwitchValue");
