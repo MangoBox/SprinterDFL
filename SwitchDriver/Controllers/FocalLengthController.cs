@@ -3,31 +3,43 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 {
     public class FocalLengthController : Controller {
 
-        public override string switchName = "Focal Length";
-        public override string switchDescription = "Controls the focal length of the Sprinter DFL system. [mm]";
-        public override bool isBool = false;
-        public override bool isWritable = true;
-        public override double minValue;
-        public override double maxValue;
+        public override string SwitchName { get { return "Focal Length Control"; } set { } }
+        public override string SwitchDescription { get { return "Controls the focal length of the Sprinter DFL system. [mm]"; } set { } }
+        public override bool isBool { get { return false; } set { } }
+        public override bool isWritable { get { return true; } set { } }
+        public override double minValue { get { return _minValue; } set { _minValue = value; } }
+        public override double maxValue { get { return _maxValue; } set { _maxValue = value; } }
+
+        public double _minValue = 0;
+        public double _maxValue = 0;
 
         public override double currentValue {
             get {
-                if(SwitchHardware.serialPort.IsOpen()) {
+                if(SwitchHardware.serialPort.IsOpen) {
                     SwitchHardware.serialPort.WriteLine("DFL:GET");
-                    String message = SwitchHardware.serialPort.ReadLine();
+                    string message = SwitchHardware.serialPort.ReadLine();
+                    SwitchHardware.LogMessage("GetSwitchValue", "Received Serial Message: " + message);
                     // Parse message and check values.
-                    double value = Double.Parse(message);
+                    double value = 0;
+                    try
+                    {
+                        value = double.Parse(message);
+                    }
+                    catch (System.FormatException exception)
+                    {
+                        value = 0;
+                    }
                     return value;
                 } else {
                     // Not open, just return the last value we set.
-                    return currentValue;
+                    return 0;
                 }
             }
             set {
-                if(SwitchHardware.serialPort.IsOpen() && isInRange(value)) {
+                if(SwitchHardware.serialPort.IsOpen && isInRange(value)) {
                     // Write focal length to serial port.
-                    SwitchHardware.serialPort.writeLine(
-                        String.format("DFL:FL {0}", value)); 
+                    SwitchHardware.serialPort.WriteLine(
+                        string.Format("DFL:FL {0}", value)); 
                     //TODO: Handle errors if not okay.
                     currentValue = value;
                 } else {
@@ -42,8 +54,8 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             double minFL,
             double maxFL
          ) : base(switchID) {
-           this.minValue = minFL;
-           this.maxValue = maxFL; 
+           this._minValue = minFL;
+           this._maxValue = maxFL; 
          }
     }
 }

@@ -22,12 +22,13 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 
 	public double clampLensFocalLength(double input) {
       	    if(input < this.minFocalLength) {
-  		return this.minFocalLength;
+  		        return this.minFocalLength;
+	        }
+	        if(input > this.maxFocalLength) {
+		        return this.maxFocalLength;
+	        }
+            return input;
 	    }
-	    if(input > this.maxFocalLength) {
-		return this.maxFocalLength;
-	    }
-	}
     }
 
     internal static class LensHandler

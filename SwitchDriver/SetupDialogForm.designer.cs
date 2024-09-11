@@ -46,7 +46,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // 
             this.cmdOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.cmdOK.Location = new System.Drawing.Point(281, 180);
+            this.cmdOK.Location = new System.Drawing.Point(307, 106);
             this.cmdOK.Name = "cmdOK";
             this.cmdOK.Size = new System.Drawing.Size(59, 24);
             this.cmdOK.TabIndex = 0;
@@ -58,7 +58,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // 
             this.cmdCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cmdCancel.Location = new System.Drawing.Point(281, 210);
+            this.cmdCancel.Location = new System.Drawing.Point(307, 136);
             this.cmdCancel.Name = "cmdCancel";
             this.cmdCancel.Size = new System.Drawing.Size(59, 25);
             this.cmdCancel.TabIndex = 1;
@@ -68,19 +68,19 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // 
             // label1
             // 
-            this.label1.Font = new System.Drawing.Font("Consolas", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Font = new System.Drawing.Font("Brigends Expanded", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.Location = new System.Drawing.Point(13, 9);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(262, 81);
+            this.label1.Size = new System.Drawing.Size(262, 35);
             this.label1.TabIndex = 2;
-            this.label1.Text = "Sprinter DFL Configuration";
+            this.label1.Text = "Sprinter DFL";
             // 
             // picASCOM
             // 
             this.picASCOM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.picASCOM.Cursor = System.Windows.Forms.Cursors.Hand;
             this.picASCOM.Image = ((System.Drawing.Image)(resources.GetObject("picASCOM.Image")));
-            this.picASCOM.Location = new System.Drawing.Point(292, 9);
+            this.picASCOM.Location = new System.Drawing.Point(318, 9);
             this.picASCOM.Name = "picASCOM";
             this.picASCOM.Size = new System.Drawing.Size(48, 56);
             this.picASCOM.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
@@ -93,7 +93,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(12, 115);
+            this.label2.Location = new System.Drawing.Point(16, 74);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(52, 14);
             this.label2.TabIndex = 5;
@@ -102,7 +102,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // chkTrace
             // 
             this.chkTrace.AutoSize = true;
-            this.chkTrace.Location = new System.Drawing.Point(19, 176);
+            this.chkTrace.Location = new System.Drawing.Point(23, 135);
             this.chkTrace.Name = "chkTrace";
             this.chkTrace.Size = new System.Drawing.Size(69, 17);
             this.chkTrace.TabIndex = 6;
@@ -112,7 +112,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // comboBoxComPort
             // 
             this.comboBoxComPort.FormattingEnabled = true;
-            this.comboBoxComPort.Location = new System.Drawing.Point(77, 112);
+            this.comboBoxComPort.Location = new System.Drawing.Point(81, 71);
             this.comboBoxComPort.Name = "comboBoxComPort";
             this.comboBoxComPort.Size = new System.Drawing.Size(88, 21);
             this.comboBoxComPort.TabIndex = 7;
@@ -120,7 +120,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // lensComboBox
             // 
             this.lensComboBox.FormattingEnabled = true;
-            this.lensComboBox.Location = new System.Drawing.Point(77, 85);
+            this.lensComboBox.Location = new System.Drawing.Point(81, 44);
             this.lensComboBox.Name = "lensComboBox";
             this.lensComboBox.Size = new System.Drawing.Size(231, 21);
             this.lensComboBox.TabIndex = 8;
@@ -129,7 +129,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(16, 88);
+            this.label3.Location = new System.Drawing.Point(20, 47);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(31, 14);
             this.label3.TabIndex = 9;
@@ -138,7 +138,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(19, 153);
+            this.checkBox1.Location = new System.Drawing.Point(23, 112);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(146, 17);
             this.checkBox1.TabIndex = 10;
@@ -149,7 +149,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(350, 243);
+            this.ClientSize = new System.Drawing.Size(376, 169);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.lensComboBox);

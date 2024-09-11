@@ -2,31 +2,39 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 {
     public class DewHeaterPower : Controller {
 
-        public override string switchName = "Dew Heater Power";
-        public override string switchDescription = "Controls the inbuilt Dew Heater's power [%]";
-        public override bool isBool = false;
-        public override bool isWritable = true;
-        public override double minValue = 0;
-        public override double maxValue = 100;
+        public override string SwitchName { get { return "Dew Heater Power"; } set { } }
+        public override string SwitchDescription { get { return "Controls the inbuilt Dew Heater's power [%]"; } set { } }
+        public override bool isBool { get { return false; } set { } }
+        public override bool isWritable { get { return true; } set { } }
+        public override double minValue { get { return 0; } set { } }
+        public override double maxValue { get { return 100; } set { } }
 
         public override double currentValue {
             get {
-                if(SwitchHardware.serialPort.IsOpen()) {
-                    SwitchHardware.serialPort.WriteLine("DFL:GET");
-                    String message = SwitchHardware.serialPort.ReadLine();
+                if(SwitchHardware.serialPort.IsOpen) {
+                    SwitchHardware.serialPort.WriteLine("DFL:HEATER");
+                    string message = SwitchHardware.serialPort.ReadLine();
                     // Parse message and check values.
-                    double value = Double.Parse(message);
+                    double value = 0;
+                    try
+                    {
+                        value = double.Parse(message);
+                    }
+                    catch (System.FormatException exception)
+                    {
+                        value = 0;
+                    }
                     return value;
                 } else {
                     // Not open, just return the last value we set.
-                    return currentValue;
+                    return 0;
                 }
             }
             set {
-                if(SwitchHardware.serialPort.IsOpen() && isInRange(value)) {
+                if(SwitchHardware.serialPort.IsOpen && isInRange(value)) {
                     // Write focal length to serial port.
-                    SwitchHardware.serialPort.writeLine(
-                        String.format("DFL:HEATER {0}", value)); 
+                    SwitchHardware.serialPort.WriteLine(
+                        string.Format("DFL:HEATER {0}", value)); 
                     //TODO: Handle errors if not okay.
                     currentValue = value;
                 } else {
@@ -36,7 +44,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             }
         }
         public DewHeaterPower (
-            short switchID,
+            short switchID
          ) : base(switchID) {
          }
     }

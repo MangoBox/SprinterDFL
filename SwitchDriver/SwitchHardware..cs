@@ -11,6 +11,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO.Ports;
 using System.Reflection;
 using System.Windows.Forms;
 using ASCOM;
@@ -39,6 +40,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal const string comPortDefault = "COM1";
         internal const string traceStateProfileName = "Trace Level";
         internal const string traceStateDefault = "true";
+        internal const int baudRate = 9600;
 
         internal const string lensSelectedProfileName = "Lens Selected";
         internal const string lensSelectedDefault = "";
@@ -52,80 +54,14 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static AstroUtils astroUtilities; // ASCOM AstroUtilities object for use as required
         internal static TraceLogger tl; // Local server's trace logger object for diagnostic log with information that you specify
         internal static Lens currentLens;
-
-        internal static double switchValue;
-
-	internal static SerialPort serialPort;
-
-        private static readonly SwitchData FocalLengthData = new SwitchData(
-            0,
-            "Focal Length",
-            "Controls the Focal Length of the Sprinter DFL System.",
-            false,
-            true,
-            24,
-            105
-        );
-        private static readonly SwitchData FocalLengthEndstop = new SwitchData(
-            0,
-            "Focal Length Endstop",
-            "Determines if the Sprinter DFL's Focal Length is at an endstop.",
-            true,
-            false,
-            0,
-            1
-        );
-        private static readonly SwitchData IsMoving = new SwitchData(
-            0,
-            "DFL Moving",
-            "Shows whether the Focal Length system is currently moving.",
-            true,
-            false,
-            0,
-            1
-        );
-        private static readonly SwitchData MinFocalLength = new SwitchData(
-            0,
-            "Minimum Focal Length",
-            "The minimum focal length of the currently selected DFL Lens",
-            false,
-            false,
-            0,
-            10000
-        );
-        private static readonly SwitchData MaxFocalLength = new SwitchData(
-            0,
-            "Maximum Focal Length",
-            "The maximum focal length of the currently selected DFL Lens",
-            false,
-            false,
-            0,
-            10000
-        );
-        private static readonly SwitchData DewHeaterPower = new SwitchData(
-            1,
-            "Dew Heater Power",
-            "Current dew heater power.",
-            false,
-            true,
-            0,
-            100
-        );
-        private static readonly SwitchData SupplyVoltage = new SwitchData(
-            0,
-            "Supply Voltage",
-            "Current supply voltage of SprinterDFL board.",
-            false,
-            false,
-            0,
-            50
-        );
+	    internal static SerialPort serialPort;
 
         private static Controller[] controllers = {
             new FocalLengthController(0, 16, 300),
             new DewHeaterPower(1),
-            new SupplyVoltage(1)
+            new SupplyVoltage(2)
         };
+        private static int numSwitches = controllers.Length;
 
 	static void ConnectSprinterDFL() {
 		serialPort = new SerialPort();
@@ -133,8 +69,8 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 		serialPort.BaudRate = baudRate; // probably 9600
 		// Add other init code here.
 
-		serialPort.ReadTimeout = 1000;
-		serialPort.WriteTimeout = 1000;
+		serialPort.ReadTimeout = 3000;
+		serialPort.WriteTimeout = 3000;
 		
 		// Attempt open.
 		serialPort.Open();
@@ -468,8 +404,6 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 
         #region ISwitchV2 Implementation
 
-        private static short numSwitch = (short)switches.Length;
-
         /// <summary>
         /// The number of switches managed by this driver
         /// </summary>
@@ -478,8 +412,8 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         {
             get
             {
-                LogMessage("MaxSwitch Get", numSwitch.ToString());
-                return numSwitch;
+                LogMessage("MaxSwitch Get", numSwitches.ToString());
+                return (short)numSwitches;
             }
         }
 
@@ -492,7 +426,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         {
             Validate("GetSwitchName", id);
             //LogMessage("GetSwitchName", $"GetSwitchName({id}) - not implemented");
-            return switches[id].SwitchName;
+            return controllers[id].SwitchName;
         }
 
         /// <summary>
@@ -520,7 +454,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             Validate("GetSwitchDescription", id);
             //LogMessage("GetSwitchDescription", $"GetSwitchDescription({id}) - not implemented");
             //throw new MethodNotImplementedException("GetSwitchDescription");
-            return switches[id].SwitchDescription;
+            return controllers[id].SwitchDescription;
         }
 
         /// <summary>
@@ -537,7 +471,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             Validate("CanWrite", id);
             // default behavour is to report true
             LogMessage("CanWrite", $"CanWrite({id}): {writable}");
-            return switches[id].isWritable;
+            return controllers[id].isWritable;
         }
 
         #region Boolean switch members
@@ -658,10 +592,10 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         /// <param name="id">The id.</param>
         private static void Validate(string message, short id)
         {
-            if (id < 0 || id >= numSwitch)
+            if (id < 0 || id >= numSwitches)
             {
-                LogMessage(message, string.Format("Switch {0} not available, range is 0 to {1}", id, numSwitch - 1));
-                throw new InvalidValueException(message, id.ToString(), string.Format("0 to {0}", numSwitch - 1));
+                LogMessage(message, string.Format("Switch {0} not available, range is 0 to {1}", id, numSwitches - 1));
+                throw new InvalidValueException(message, id.ToString(), string.Format("0 to {0}", numSwitches - 1));
             }
         }
 

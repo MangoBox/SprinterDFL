@@ -75,6 +75,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ClassFactory.cs" />
+    <Compile Include="SwitchDriver\Controllers\Controller.cs" />
+    <Compile Include="SwitchDriver\Controllers\DewHeaterPower.cs" />
+    <Compile Include="SwitchDriver\Controllers\FocalLengthController.cs" />
+    <Compile Include="SwitchDriver\Controllers\SupplyVoltage.cs" />
     <Compile Include="SwitchDriver\LensHandler.cs" />
     <Compile Include="SwitchDriver\SwitchDriver.cs" />
     <Compile Include="SwitchDriver\SwitchHardware..cs" />
