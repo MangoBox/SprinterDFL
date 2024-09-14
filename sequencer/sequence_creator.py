@@ -71,9 +71,48 @@ def generate_sequence():
         else:
             fp = calculate_focus_pos(fl)
             fp_last = calculate_focus_pos(frames[i-1]['FL'])
-            offset = fp - fp_last
+            offset = round(fp - fp_last)
             frames[i]["offset"] = offset
             print(f'Focus Pos: {fp}, Focus Offset of: {offset}')
+        # Now, determine whether we should slew this frame.
+        # We always need to slew on the first frames, or whenever RA or DEC changes.
+        slew_this_frame = True if i == 0 else f['RA'] != frames[i-1]['RA'] or f['DEC'] != frames[i-1]['DEC']
+        frames[i]['slew'] = slew_this_frame
+        if slew_this_frame:
+            print("Slewing required this frame.")
+    return frames
+
+def format_time(seconds):
+    if seconds < 60:
+        return f'{seconds:.2f}s'
+    elif seconds < 60 * 60:
+        whole_minutes = seconds // 60
+        remaining_seconds = seconds - (whole_minutes * 60)
+        return f'{whole_minutes}min {remaining_seconds:.0f}s'
+    else:
+        whole_hours = seconds // 3600
+        remaining_seconds = seconds - (whole_hours * 3600)
+        remaining_minutes = remaining_seconds // 60
+        remaining_seconds -= remaining_minutes * 60
+        return f'{whole_hours}h {remaining_minutes}min {remaining_seconds:.0f}s'
+
+def calculate_sequence_time(sequence):
+    # Time to switch filters, restart guiding,
+    # download images, etc. per frame.
+    inter_frame_time = 5
+    slew_time = 10
+    af_time = 30
     
+    total_time = 0
+    for f in frames:
+        if f["af"]:
+            total_time += af_time
+        if f['slew']:
+            total_time += slew_time
+        for fil in filters_exp.values():
+            total_time += fil
+        total_time += inter_frame_time
+    print(format_time(total_time))
+
 generate_sequence()
-print(frames)
+calculate_sequence_time(frames)
