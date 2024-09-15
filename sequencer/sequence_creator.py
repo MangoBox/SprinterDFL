@@ -1,6 +1,7 @@
 import json
 import csv
 import math
+import copy
 
 realtime_animation_s = 5
 fps = 12
@@ -27,11 +28,13 @@ print(titles, frames)
 
 # Dictionary of filters with exposure time.
 filters_exp = {
-    "L" : 120,
-    "R" : 30,
-    "G" : 30,
-    "B" : 30,
-    "Ha" : 180,
+    # Note: In future, could we add dynamic gains to
+    # account for different focal lengths?
+    "L" :  {"number" : 1, "exposure": 120, "gain": 139, "offset": 20},
+    "Red" :  {"number" : 1, "exposure": 30, "gain": 0, "offset": 20},
+    "Green" :  {"number" : 1, "exposure": 30, "gain": 0, "offset": 20},
+    "Blue" :  {"number" : 1, "exposure": 30, "gain": 0, "offset": 20},
+    "Ha" : {"number" : 1, "exposure": 120, "gain": 0, "offset": 20},
     # "OIII" : 300,
     # "SII" : 300,
 }
@@ -110,9 +113,288 @@ def calculate_sequence_time(sequence):
         if f['slew']:
             total_time += slew_time
         for fil in filters_exp.values():
-            total_time += fil
+            total_time += fil["exposure"]
         total_time += inter_frame_time
     print(format_time(total_time))
 
-generate_sequence()
+id = 0
+def get_id_num():
+    global id
+    # Increments a global ID counter.
+    id += 1
+    return str(id)
+
+def decdeg2dms(dd):
+   is_positive = dd >= 0
+   dd = abs(dd)
+   minutes,seconds = divmod(dd*3600,60)
+   degrees,minutes = divmod(minutes,60)
+   degrees = degrees if is_positive else -degrees
+   return (degrees,minutes,seconds)
+
+def decdeg2hms(dd):
+   is_positive = dd >= 0
+   dd = abs(dd)
+   hrs_in = dd / 15
+   minutes,seconds = divmod(hrs_in*3600,60)
+   hours,minutes = divmod(minutes,60)
+   hours = hours if is_positive else -hours
+   return (hours,minutes,seconds)
+
+def create_sequence_json(frames):
+    # Creates base JSON object.
+    sequence = {}
+    sequence["$id"] = get_id_num()
+    sequence["$type"] = "NINA.Sequencer.Container.SequenceRootContainer, NINA.Sequencer"
+    strategy = {}
+    strategy['$type'] = "NINA.Sequencer.Container.ExecutionStrategy.SequentialStrategy, NINA.Sequencer"
+    sequence["Strategy"] = strategy
+    sequence["Name"] = "SprinterDFL Sequence" # Update sequence name here
+    sequence["Parent"] = None
+    sequence["ErrorBehavior"] = 0
+    sequence["Attempts"] = 1 # Does this need to be 0?
+    # Conditions object.
+    conditions = {}
+    conditions["$type"] = "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.Conditions.ISequenceCondition, NINA.Sequencer]], System.ObjectModel"
+    conditions["$id"] = get_id_num()
+    conditions["$values"] = []
+    sequence["Conditions"] = conditions
+    sequence["IsExpanded"] = True
+    # Items object. Actual sequence content in here.
+    items = {}
+    items["$id"] = get_id_num()
+    items["$type"] = "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.Container.ISequenceItem, NINA.Sequencer]], System.ObjectModel"
+    values = []
+    # Start area container.
+    base_container = {}
+    base_container['IsExpanded'] = False
+    base_container['ErrorBehavior'] = 0
+    base_container['Attempts'] = 1
+    base_container['Parent'] = {'$ref': "1"} # If sequence setup changes, will need to update.
+    base_container['Strategy'] = {"$type": "NINA.Sequencer.Container.ExecutionStrategy.SequentialStrategy, NINA.Sequencer"}
+    base_container['Conditions'] = {
+        "$type": "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.Conditions.ISequenceCondition, NINA.Sequencer]], System.ObjectModel",
+        "$id": None, # Will be updated later.
+        "$values": []
+    }
+    base_container["Items"] = {
+        "$type": "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.Container.ISequenceItem, NINA.Sequencer]], System.ObjectModel",
+        "$id": None, # Will be updated later.
+        "$values": []
+    }
+    base_container["Triggers"] = {
+        "$type": "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.SequenceItem.ISequenceItem, NINA.Sequencer]], System.ObjectModel",
+        "$id": None, # Will be updated later.
+        "$values": []
+    }
+    # Start container.
+    start_container = copy.deepcopy(base_container)
+    start_container["$id"] = get_id_num()
+    start_container["Name"] = "Start"
+    start_container["Conditions"]["$id"] = get_id_num() # Update ID.
+    start_container["Items"]["$id"] = get_id_num() # Update ID.
+    start_container["Triggers"]["$id"] = get_id_num() # Update ID.
+    start_container["$type"] = "NINA.Sequencer.Container.StartAreaContainer, NINA.Sequencer"
+    values.append(start_container)
+    # Target Area Container.
+    target_area_container = copy.deepcopy(base_container)
+    target_area_id = get_id_num()
+    target_area_container["$id"] = target_area_id
+    target_area_container["Name"] = "Targets"
+    target_area_container["Conditions"]["$id"] = get_id_num() # Update ID.
+    target_area_container["Items"]["$id"] = get_id_num() # Update ID.
+    target_area_container["$type"] = "NINA.Sequencer.Container.TargetAreaContainer, NINA.Sequencer"
+    
+    target_items = []
+    for i, f in enumerate(frames):
+        container = {}
+        frame_id = get_id_num()
+        print(f"Adding frame {i+1}/{len(frames)} to sequence. ID: {frame_id}")
+        container['$id'] = frame_id
+        container['Strategy'] = {"$type": "NINA.Sequencer.Container.ExecutionStrategy.SequentialStrategy, NINA.Sequencer"}
+        container['IsExpanded'] = False
+        container['ErrorBehavior'] = 0
+        container['Attempts'] = 1
+        container['Name'] = f"Frame {i+1}/{len(frames)} RA: {f['RA']}, DEC: {f['DEC']}, FL: {f['FL']}mm]"
+        container['Parent'] = {'$ref': target_area_id}
+        container['$type'] = "NINA.Sequencer.Container.DeepSkyObjectContainer, NINA.Sequencer"
+        container['Conditions'] = {
+            "$type": "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.Conditions.ISequenceCondition, NINA.Sequencer]], System.ObjectModel",
+            "$id": get_id_num(),
+            "$values": []
+        }
+        container["Items"] = {
+            "$type": "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.Container.ISequenceItem, NINA.Sequencer]], System.ObjectModel",
+            "$id": get_id_num(), # Can be updated now because it's the parent of the items below.
+            "$values": None 
+        }
+        target = {}
+        target["$id"] = get_id_num()
+        target["$type"] = "NINA.Astrometry.InputTarget, NINA.Astrometry"
+        target["Expanded"] = True
+        target["PositionAngle"] = 0 # Update later if we want positional angle.
+        target["TargetName"] = f"Frame {i+1}/{len(frames)}"
+        # Convert RA and DEC to hms and dms.
+        # RA is in hours, DEC is in degrees.
+        (ra_hrs, ra_min, ra_sec) = decdeg2hms(f['RA'] * 15)
+        (dec_deg, dec_min, dec_sec) = decdeg2dms(f['DEC'])
+        # Handle negative dec values
+        is_neg_dec = dec_deg < 0
+        dec_deg = abs(dec_deg)
+
+        target["InputCoordinates"] = {
+            "$id": get_id_num(),
+            "$type": "NINA.Astrometry.InputCoordinates, NINA.Astrometry",
+            "RAHours": ra_hrs,
+            "RAMinutes": ra_min,
+            "RASeconds": ra_sec,
+            "NegativeDec": is_neg_dec,
+            "DecDegrees": dec_deg,
+            "DecMinutes": dec_min,
+            "DecSeconds": dec_sec,
+        }
+        container["Target"] = target
+        seq_tasks = []
+        # Now, we add the instructions for this frame.
+        # Add focus offset instructions
+        if f["offset"] != 0:
+            mfr = {}
+            mfr["$id"] = get_id_num()
+            mfr["$type"] = "NINA.Sequencer.SequenceItem.Focuser.MoveFocuserRelative, NINA.Sequencer"
+            mfr["RelativePosition"] = f["offset"]
+            mfr["ErrorBehavior"] = 0
+            mfr["Attempts"] = 1
+            mfr["Parent"] = {'$ref': frame_id}
+            seq_tasks.append(mfr)
+
+        # If we need to slew, do it here.
+        if f["slew"]:
+            slew = {}
+            slew["$id"] = get_id_num()
+            slew["$type"] = "NINA.Sequencer.SequenceItem.Telescope.SlewScopeToRaDec, NINA.Sequencer"
+            slew["ErrorBehavior"] = 0
+            slew["Attempts"] = 1
+            slew["Parent"] = {'$ref': frame_id}
+            slew["Coordinates"] = {
+                "$id": get_id_num(),
+                "$type": "NINA.Astrometry.InputCoordinates, NINA.Astrometry",
+                "RAHours": ra_hrs,
+                "RAMinutes": ra_min,
+                "RASeconds": ra_sec,
+                "NegativeDec": is_neg_dec,
+                "DecDegrees": dec_deg,
+                "DecMinutes": dec_min,
+                "DecSeconds": dec_sec,
+            }
+            seq_tasks.append(slew)
+
+        # Add exposures for each filter.
+        for filter in filters_exp.keys():
+            # Create a new container for this filter.
+            filter_container = copy.deepcopy(base_container)
+            filter_container["$id"] = get_id_num()
+            filter_container["Name"] = f"{filter} : {filters_exp[filter]['number']}x{filters_exp[filter]['exposure']}s"
+            filter_container["Conditions"]["$id"] = get_id_num() # Update ID.
+            filter_container["Items"]["$id"] = get_id_num()
+            filter_container["$type"] = "NINA.Sequencer.Container.SequentialContainer, NINA.Sequencer"
+            # Now, add items to the filter container.
+            # Add filter change.
+            filter_change = {}
+            filter_change["$id"] = get_id_num()
+            filter_change["$type"] = "NINA.Sequencer.SequenceItem.FilterWheel.SwitchFilter, NINA.Sequencer"
+            filter_change["Filter"] = {
+                "$id": get_id_num(),
+                "$type": "NINA.Equipment.Filter.Filter, NINA.Equipment",
+                "_name": filter
+            }
+            filter_change["ErrorBehavior"] = 0
+            filter_change["Attempts"] = 1
+            filter_change["Parent"] = {'$ref': filter_container["$id"]}
+            filter_container["Items"]["$values"] = [filter_change]
+            # Add exposure.
+            exposure = {}
+            exposure["$id"] = get_id_num()
+            exposure["$type"] = "NINA.Sequencer.SequenceItem.Imaging.TakeManyExposures, NINA.Sequencer"
+            exposure["ErrorBehavior"] = 0
+            exposure["Attempts"] = 1
+            exposure["Parent"] = {'$ref': filter_container["$id"]}
+            exposure["Name"] = "Take Many Exposures"
+            exposure['Conditions'] = {
+                "$type": "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.Conditions.ISequenceCondition, NINA.Sequencer]], System.ObjectModel",
+                "$id": get_id_num(),
+                "$values": [
+                    {
+                        "$id": get_id_num(),
+                        "$type": "NINA.Sequencer.Conditions.LoopCondition, NINA.Sequencer",
+                        "Parent": {'$ref': exposure["$id"]},
+                        "CompletedIterations": 0,
+                        "Iterations": filters_exp[filter]['number']
+                    }
+                ]
+            }
+            exposure["Items"] = {
+                "$type": "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.Container.ISequenceItem, NINA.Sequencer]], System.ObjectModel",
+                "$id": get_id_num(),
+                "$values": [
+                    {
+                        "$id": get_id_num(),
+                        "$type": "NINA.Sequencer.SequenceItem.Imaging.TakeExposure, NINA.Sequencer",
+                        "ExposureTime": filters_exp[filter]['exposure'],
+                        "Gain": filters_exp[filter]['gain'],
+                        "Offset": filters_exp[filter]['offset'],
+                        "Parent": {'$ref': exposure["$id"]},
+                        "ImageType" : "LIGHT",
+                        "ErrorBehavior": 0,
+                        "Attempts": 1
+                    }
+                ]
+
+            }
+            filter_container["Items"]["$values"].append(exposure)
+
+            filter_container["Triggers"]["$id"] = get_id_num()
+            seq_tasks.append(filter_container)
+
+            
+        container["Items"]["$values"] = seq_tasks
+        # Trigger IDs last.
+        container['Triggers'] = {
+            "$type": "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.SequenceItem.ISequenceItem, NINA.Sequencer]], System.ObjectModel",
+            "$id": get_id_num(),
+            "$values": []
+        }
+        target_items.append(container)
+
+    # Adding our sequence data here.
+
+    target_area_container["Items"]["$values"] = target_items
+    # We need to update triggers later.
+    target_area_container["Triggers"]["$id"] = get_id_num() # Update ID.
+    values.append(target_area_container)
+    # End Container.
+    end_container = copy.deepcopy(base_container)
+    end_container["$id"] = get_id_num()
+    end_container["Name"] = "End"
+    end_container["Conditions"]["$id"] = get_id_num() # Update ID.
+    end_container["Items"]["$id"] = get_id_num() # Update ID.
+    end_container["Triggers"]["$id"] = get_id_num() # Update ID.
+    end_container["$type"] = "NINA.Sequencer.Container.EndAreaContainer, NINA.Sequencer"
+    values.append(end_container)
+    items["$values"] = values
+    sequence["Items"] = items
+    # Triggers object.
+    triggers = {}
+    triggers["$id"] = get_id_num()
+    triggers["$type"] = "System.Collections.ObjectModel.ObservableCollection`1[[NINA.Sequencer.SequenceItem.ISequenceItem, NINA.Sequencer]], System.ObjectModel"
+    triggers["$values"] = []
+    sequence["Triggers"] = triggers
+
+
+    # Output and save sequence.
+    with open("sequence_out.json", 'w') as fp:
+        json.dump(sequence, fp, indent=2)
+
+
+output_frames = generate_sequence()
 calculate_sequence_time(frames)
+create_sequence_json(output_frames)
