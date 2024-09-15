@@ -30,7 +30,7 @@ print(titles, frames)
 filters_exp = {
     # Note: In future, could we add dynamic gains to
     # account for different focal lengths?
-    "L" :  {"number" : 1, "exposure": 120, "gain": 139, "offset": 20},
+    "L" :  {"number" : 5, "exposure": 120, "gain": 139, "offset": 20},
     "Red" :  {"number" : 1, "exposure": 30, "gain": 0, "offset": 20},
     "Green" :  {"number" : 1, "exposure": 30, "gain": 0, "offset": 20},
     "Blue" :  {"number" : 1, "exposure": 30, "gain": 0, "offset": 20},
@@ -83,6 +83,12 @@ def generate_sequence():
         frames[i]['slew'] = slew_this_frame
         if slew_this_frame:
             print("Slewing required this frame.")
+        # Determine whether we need to zoom this frame.
+        zoom_this_frame = True if i == 0 else f['FL'] != frames[i-1]['FL']
+        frames[i]['zoom'] = zoom_this_frame
+        if zoom_this_frame:
+            print("Changing focal lengths required this frame.")
+        
     return frames
 
 def format_time(seconds):
@@ -255,17 +261,6 @@ def create_sequence_json(frames):
         }
         container["Target"] = target
         seq_tasks = []
-        # Now, we add the instructions for this frame.
-        # Add focus offset instructions
-        if f["offset"] != 0:
-            mfr = {}
-            mfr["$id"] = get_id_num()
-            mfr["$type"] = "NINA.Sequencer.SequenceItem.Focuser.MoveFocuserRelative, NINA.Sequencer"
-            mfr["RelativePosition"] = f["offset"]
-            mfr["ErrorBehavior"] = 0
-            mfr["Attempts"] = 1
-            mfr["Parent"] = {'$ref': frame_id}
-            seq_tasks.append(mfr)
 
         # If we need to slew, do it here.
         if f["slew"]:
@@ -287,6 +282,39 @@ def create_sequence_json(frames):
                 "DecSeconds": dec_sec,
             }
             seq_tasks.append(slew)
+
+        # Now, we add the instructions for this frame.
+        # Add focus offset instructions
+        if f["offset"] != 0:
+            mfr = {}
+            mfr["$id"] = get_id_num()
+            mfr["$type"] = "NINA.Sequencer.SequenceItem.Focuser.MoveFocuserRelative, NINA.Sequencer"
+            mfr["RelativePosition"] = f["offset"]
+            mfr["ErrorBehavior"] = 0
+            mfr["Attempts"] = 1
+            mfr["Parent"] = {'$ref': frame_id}
+            seq_tasks.append(mfr)
+
+        # If we need to autofocus, do it here.
+        if f["af"]:
+            af = {}
+            af["$id"] = get_id_num()
+            af["$type"] = "NINA.Sequencer.SequenceItem.Autofocus.RunAutofocus, NINA.Sequencer"
+            af["ErrorBehavior"] = 0
+            af["Attempts"] = 1
+            af["Parent"] = {'$ref': frame_id}
+            seq_tasks.append(af)
+
+        if f["zoom"]:
+            zoom = {}
+            zoom["$id"] = get_id_num()
+            zoom["$type"] = "NINA.Sequencer.SequenceItem.Switch.SetSwitchValue, NINA.Sequencer"
+            zoom["SwitchIndex"] = 0 # We might need to dynamically update this based on the ASCOM driver.
+            zoom["ErrorBehavior"] = 0
+            zoom["Attempts"] = 1
+            zoom["Parent"] = {'$ref': frame_id}
+            zoom["Value"] = f["FL"]
+            seq_tasks.append(zoom)
 
         # Add exposures for each filter.
         for filter in filters_exp.keys():
