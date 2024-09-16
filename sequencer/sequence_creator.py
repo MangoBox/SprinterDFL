@@ -12,6 +12,7 @@ switch_name = "FocalLength"
 interval_fl_read_s = 0.5
 # Generate Input Frames
 input_frames_file = open("input_frames.csv", 'r')
+always_slew = True
 
 input_frames = csv.reader(input_frames_file)
 frames = []
@@ -81,7 +82,7 @@ def generate_sequence():
             print(f'Focus Pos: {fp}, Focus Offset of: {offset}')
         # Now, determine whether we should slew this frame.
         # We always need to slew on the first frames, or whenever RA or DEC changes.
-        slew_this_frame = True if i == 0 else f['RA'] != frames[i-1]['RA'] or f['DEC'] != frames[i-1]['DEC']
+        slew_this_frame = (True if i == 0 else f['RA'] != frames[i-1]['RA'] or f['DEC'] != frames[i-1]['DEC']) or always_slew
         frames[i]['slew'] = slew_this_frame
         if slew_this_frame:
             print("Slewing required this frame.")
@@ -315,7 +316,9 @@ def create_sequence_json(frames):
         print(f"Adding frame {i+1}/{len(frames)} to sequence. ID: {frame_id}")
         container['$id'] = frame_id
         container['Strategy'] = {"$type": "NINA.Sequencer.Container.ExecutionStrategy.SequentialStrategy, NINA.Sequencer"}
-        container['Name'] = f"Frame {i+1}/{len(frames)} RA: {f['RA']}, DEC: {f['DEC']}, FL: {f['FL']}mm]"
+        container_name = f"Frame {str(i+1) + "/" + str(len(frames)):<10} RA: {f['RA']:<10} DEC: {f['DEC']:<10} FL: {str(f['FL']) + "mm":<10}"
+        container_name.strip()
+        container['Name'] = container_name
         container['Parent'] = {'$ref': target_area_id}
         container["Conditions"]["$id"] = get_id_num() # Update ID since we didn't do it on container init.
         container["Items"]["$id"] = get_id_num() # Update ID since we didn't do it on container init.
@@ -388,7 +391,7 @@ def create_sequence_json(frames):
             # Create a new container for this filter.
             filter_container = copy.deepcopy(base_container)
             filter_container["$id"] = get_id_num()
-            filter_container["Name"] = f"{filter} : {filters_exp[filter]['number']}x{filters_exp[filter]['exposure']}s"
+            filter_container["Name"] = f"Expose {filter} ({filters_exp[filter]['number']}x{filters_exp[filter]['exposure']}s)"
             filter_container["Conditions"]["$id"] = get_id_num() # Update ID.
             filter_container["Items"]["$id"] = get_id_num()
             filter_container["$type"] = "NINA.Sequencer.Container.SequentialContainer, NINA.Sequencer"
