@@ -165,16 +165,22 @@ void set_mode(StepMode mode) {
 void handle_input() {
   if(COMM_SERIAL.available() > 0) {
     // Does this work?
-    String input = COMM_SERIAL.readStringUntil(' ');
+    String input = COMM_SERIAL.readStringUntil('\n');
     input.trim();
+    String command = input;
+    String arguments = "";
+    // If there are arguments provided, split them.
+    if(input.indexOf(' ') != -1) {
+      command = input.substring(0, input.indexOf(' '));
+      arguments = input.substring(input.indexOf(' ') + 1);
+    }
    
-    if(input == DFL_MOVE_COMMAND) {
-      String input = COMM_SERIAL.readStringUntil('\n');
-      if(input.length() == 0) {
+    if(command == DFL_MOVE_COMMAND) {
+      if(arguments.length() == 0) {
         COMM_SERIAL.println("DFL: No position provided.");
         return;
       }
-      uint32_t move_pos = input.toInt();
+      uint32_t move_pos = arguments.toInt();
       if(move_pos == 0) {
         COMM_SERIAL.println("DFL: Could not parse position, or provided 0.");
         return;
@@ -188,44 +194,38 @@ void handle_input() {
       set_target(move_pos + target);
       COMM_SERIAL.println("DFL: Set target to position " + (String)target);
       set_mode(MOVING);
-    } else if (input == DFL_HOME_COMMAND) {
+    } else if (command == DFL_HOME_COMMAND) {
       // Home DFL
       // Clear the rest of the serial buffer since we don't need to read it.
-      COMM_SERIAL.readStringUntil('\n');
       COMM_SERIAL.println("DFL: Started homing.");
       set_mode(HOMING);
-    } else if (input == DFL_ABORT_COMMAND) {
-      COMM_SERIAL.readStringUntil('\n');
+    } else if (command == DFL_ABORT_COMMAND) {
       COMM_SERIAL.println("DFL: Aborted movement.");
       set_mode(IDLE);
       target = step_index;
-    } else if (input == DFL_GET_COMMAND) {
-      COMM_SERIAL.readStringUntil('\n');
+    } else if (command == DFL_GET_COMMAND) {
       COMM_SERIAL.println("DFL: " + (String)step_index + " (Target: " + (String)target + ")");
       print_mode();
-    } else if (input == DFL_HEATER_COMMAND) {
-      String input = COMM_SERIAL.readStringUntil('\n');
-      if (input.length() == 0) {
+    } else if (command == DFL_HEATER_COMMAND) {
+      if (arguments.length() == 0) {
         COMM_SERIAL.println("DFL: " + (String) heater_power);
         return;
       }
-      if (input.charAt(0) == '0' && input.length() == 1) {
+      if (arguments.charAt(0) == '0' && arguments.length() == 1) {
         COMM_SERIAL.println("DFL: Disabled heater.");
         return;
       }
-      uint16_t power = input.toInt();
+      uint16_t power = arguments.toInt();
       if(power <= 0 || power > 100) {
         COMM_SERIAL.println("DFL: Provide a power value between 0 and 100.");
         return;
       }
       heater_power = (uint8_t)power;
       COMM_SERIAL.println("DFL: Set heater power to " + (String)heater_power + "%.");
-    } else if (input == DFL_VOLTAGE_COMMAND) {
-      COMM_SERIAL.readStringUntil('\n');
+    } else if (command == DFL_VOLTAGE_COMMAND) {
       float voltage = measure_voltage();
       COMM_SERIAL.println("DFL: Voltage: " + (String)voltage + "V");
     } else {
-      COMM_SERIAL.readStringUntil('\n');
       COMM_SERIAL.println("DFL: Unknown command.");
     }
   }

@@ -57,9 +57,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 	    internal static SerialPort serialPort;
 
         private static Controller[] controllers = {
-            new FocalLengthController(0, 16, 300),
-            new DewHeaterPower(1),
-            new SupplyVoltage(2)
+            new FocalLengthController(0, 16, 300)//,
+            //new DewHeaterPower(1),
+            //new SupplyVoltage(2)
         };
         private static int numSwitches = controllers.Length;
 

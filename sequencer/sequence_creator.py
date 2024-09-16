@@ -316,8 +316,7 @@ def create_sequence_json(frames):
         print(f"Adding frame {i+1}/{len(frames)} to sequence. ID: {frame_id}")
         container['$id'] = frame_id
         container['Strategy'] = {"$type": "NINA.Sequencer.Container.ExecutionStrategy.SequentialStrategy, NINA.Sequencer"}
-        container_name = f"Frame {str(i+1) + "/" + str(len(frames)):<10} RA: {f['RA']:<10} DEC: {f['DEC']:<10} FL: {str(f['FL']) + "mm":<10}"
-        container_name.strip()
+        container_name = f"Frame {str(i+1) + "/" + str(len(frames)):<10} RA: {f['RA']:<10} DEC: {f['DEC']:<10} FL: {str(f['FL']) + "mm"}"
         container['Name'] = container_name
         container['Parent'] = {'$ref': target_area_id}
         container["Conditions"]["$id"] = get_id_num() # Update ID since we didn't do it on container init.

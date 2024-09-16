@@ -35,7 +35,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
     [ComVisible(true)]
     [Guid("be74601b-e6e4-4326-bde6-5a8839d3fa47")]
     [ProgId("ASCOM.LiamDaviesSprinterDFL.Switch")]
-    [ServedClassName("Focal Length - Sprinter DFL Driver")] // Driver description that appears in the Chooser, customise as required
+    [ServedClassName("Sprinter DFL Driver")] // Driver description that appears in the Chooser, customise as required
     [ClassInterface(ClassInterfaceType.None)]
     public class Switch : ReferenceCountedObjectBase, ISwitchV2, IDisposable
     {
