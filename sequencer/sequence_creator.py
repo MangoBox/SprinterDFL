@@ -7,7 +7,9 @@ realtime_animation_s = 5
 fps = 12
 
 num_frames_refocus = 5
-
+focal_length_var_identifier = "FL"
+switch_name = "FocalLength"
+interval_fl_read_s = 0.5
 # Generate Input Frames
 input_frames_file = open("input_frames.csv", 'r')
 
@@ -183,6 +185,92 @@ def update_obj_ids(obj):
     if obj["Triggers"]["$id"] is None:
         obj["Triggers"]["$id"] = get_id_num()
 
+def create_fl_var_init_obj(parent_id, starting_value):
+    var_obj = create_object("WhenPlugin.When.SetVariable, WhenPlugin",
+        init_base_id=True, init_conditions=False, init_items=False, init_triggers=False)
+    var_obj["Parent"] = {'$ref': parent_id}
+    var_obj["Variable"] = None
+    var_obj["OValuExpr"] = None
+    var_obj["OriginalDefinition"] = str(starting_value) # What does this mean?
+    var_obj["Definition"] = str(starting_value) # What does this mean?
+    var_obj["Identifier"] = focal_length_var_identifier
+    return var_obj
+
+def create_fl_var_set_obj(parent_id, value):
+    var_obj = create_object("WhenPlugin.When.ResetVariable, WhenPlugin",
+        init_base_id=True, init_conditions=False, init_items=False, init_triggers=False)
+    var_obj["Parent"] = {'$ref': parent_id}
+    var_obj["Variable"] = focal_length_var_identifier
+    var_obj["CValuExpr"] = None
+    var_obj["Expr"] = {
+        "$id" : get_id_num(),
+        "$type": "WhenPlugin.When.Expr, WhenPlugin",
+        "Expression": str(value),
+        "Type": None
+    }
+    return var_obj
+
+# This function creates a focal length object.
+# It will automatically encapsulate the loop and
+# checking behaviour in it.
+def create_focal_length_object(parent, fl_value):
+    # Create a container for everything to go into.
+    container = create_object("NINA.Sequencer.Container.SequentialContainer, NINA.Sequencer",
+        init_base_id=True, init_conditions=True, init_items=True, init_triggers=False)
+    container["Name"] = f"Set Focal Length to {fl_value}mm"
+    container["Parent"] = {'$ref': parent}
+    container["Strategy"] = {"$type": "NINA.Sequencer.Container.ExecutionStrategy.SequentialStrategy, NINA.Sequencer"}
+    container_id = container["$id"]
+    # Set our initial variable value.
+    # This should only be done once.
+    var_set = create_fl_var_set_obj(container_id, fl_value)
+    container["Items"]["$values"].append(var_set)
+    # Now, tell the switch to move to the new focal length.
+    switch_set = create_object("WhenPlugin.When.SetSwitchValue, WhenPlugin")
+    switch_set["SwitchIndex"] = 0 # We might need to dynamically update this based on the ASCOM driver.
+    switch_set["Parent"] = {'$ref': container_id}
+    switch_set["ValueExpr"] = {
+        "$id": get_id_num(),
+        "$type": "WhenPlugin.When.Expr, WhenPlugin",
+        "Expression": focal_length_var_identifier,
+        "Type": None
+    }
+    update_obj_ids(switch_set)
+    container["Items"]["$values"].append(switch_set)
+    # Now, loop until the switch is done moving.
+    # We will need to wait here until it is done.
+    loop = create_object( "NINA.Sequencer.Container.SequentialContainer, NINA.Sequencer",
+                         init_base_id=True, init_conditions=True, init_items=False, init_triggers=False)
+    loop["Parent"] = {'$ref': container_id}
+    loop["Name"] = f"Wait for Focal Length Change to {fl_value}mm"
+    loop["Strategy"] = {
+        "$type": "NINA.Sequencer.Container.ExecutionStrategy.SequentialStrategy, NINA.Sequencer"
+    }
+    loop_id = loop["$id"]
+    # Add in loop condition.
+    loop_condition = create_object("WhenPlugin.When.LoopWhile, WhenPlugin",
+        init_base_id=True, init_conditions=False, init_items=False, init_triggers=False)
+    loop_condition["Parent"] = {'$ref': loop_id}
+    loop_condition["Predicate"] = None
+    loop_condition["PredicateExpr"] = {
+        "$id": get_id_num(),
+        "$type": "WhenPlugin.When.Expr, WhenPlugin",
+        "Expression": f"{switch_name} != {focal_length_var_identifier}", # Could change this to Not(SwitchIsMoving) later
+        "Type": None
+    }
+    loop["Conditions"]["$values"] = [loop_condition]
+
+    # Now, let's add our time span to wait.
+    time_wait = create_object("NINA.Sequencer.SequenceItem.Utility.WaitForTimeSpan, NINA.Sequencer")
+    time_wait["Parent"] = {'$ref': loop_id}
+    time_wait["Time"] = interval_fl_read_s
+    loop["Items"]["$values"].append(time_wait)
+
+    update_obj_ids(loop)
+    container["Items"]["$values"].append(loop)
+    update_obj_ids(container)
+    return container
+
 def create_sequence_json(frames):
     # Creates base JSON object.
     sequence = create_object("NINA.Sequencer.Container.SequenceRootContainer, NINA.Sequencer")
@@ -216,6 +304,10 @@ def create_sequence_json(frames):
     target_area_container["$type"] = "NINA.Sequencer.Container.TargetAreaContainer, NINA.Sequencer"
     
     target_items = []
+    var_init_obj = create_fl_var_init_obj(target_area_id, frames[0]['FL'])
+    target_items.append(var_init_obj)
+
+
     for i, f in enumerate(frames):
         container = create_object("NINA.Sequencer.Container.DeepSkyObjectContainer, NINA.Sequencer",
                                   init_base_id=False, init_conditions=False, init_items=False, init_triggers=False)
@@ -288,12 +380,8 @@ def create_sequence_json(frames):
             seq_tasks.append(af)
 
         if f["zoom"]:
-            zoom = create_object("NINA.Sequencer.SequenceItem.Switch.SetSwitchValue, NINA.Sequencer")
-            zoom["SwitchIndex"] = 0 # We might need to dynamically update this based on the ASCOM driver.
-            zoom["Parent"] = {'$ref': frame_id}
-            zoom["Value"] = f["FL"]
-            update_obj_ids(zoom)
-            seq_tasks.append(zoom)
+            fl_obj = create_focal_length_object(frame_id, f["FL"])
+            seq_tasks.append(fl_obj)
 
         # Add exposures for each filter.
         for filter in filters_exp.keys():
