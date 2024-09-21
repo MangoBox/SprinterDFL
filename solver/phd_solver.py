@@ -8,6 +8,9 @@ import datetime
 import subprocess
 import configparser
 
+from alpaca.telescope import *      # Multiple Classes including Enumerations
+from alpaca.exceptions import *     # Or just the exceptions you want to catch
+
 
 # This script reads the PHD debug folder, and feeds it into the ASTAP plate solver.
 # It then returns the RA and DEC of the solved image.
@@ -20,7 +23,7 @@ containing_folder = ""
 new_file_name = ""
 
 should_remove = False
-date=datetime.datetime.now()
+date = datetime.now()
 
 """
 with Guider(host) as guider:
@@ -74,6 +77,23 @@ subprocess.run([astap_path,
                 ])
 
 # Open output file.
+
+
+
+# Connect to telescope through Alpyca.
+# Note: Use ASCOM remote to setup Windows devices on this.
+# The mount needs to be on Device 0.
+T = Telescope('localhost:11111', 0)
+try:
+    T.Connected = True
+    print(f'Connected to {T.Name}')
+    print(T.Description)
+    T.Tracking = True               # Needed for slewing (see below)
+    print('Starting sync...')
+    T.SyncToCoordinates(11, 30.5)       # Sync to RA/DEC (0, 0)
+    print('Sync complete.')
+except Exception as e:              # Should catch specific InvalidOperationException
+    print(f'Sync failed: {str(e)}')
 
 # Finally, remove this image.
 if(should_remove):
