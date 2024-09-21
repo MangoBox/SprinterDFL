@@ -3,6 +3,8 @@ import csv
 import math
 import copy
 
+camera_temperature = -15
+
 realtime_animation_s = 5
 fps = 12
 
@@ -211,6 +213,57 @@ def create_fl_var_set_obj(parent_id, value):
     }
     return var_obj
 
+def create_seq_start_obj(parent_id):
+    start_obj = create_object("NINA.Sequencer.Container.SequentialContainer, NINA.Sequencer",
+        init_base_id=True, init_conditions=True, init_items=True, init_triggers=False)
+    start_obj["Name"] = "Start Items"
+    start_obj["Parent"] = {'$ref': parent_id}
+    start_obj["Strategy"] = {"$type": "NINA.Sequencer.Container.ExecutionStrategy.SequentialStrategy, NINA.Sequencer"}
+    # Add in the start items here.
+    
+    # Set Camera Cooling
+    cool_camera = create_object("NINA.Sequencer.SequenceItem.Camera.CoolCamera, NINA.Sequencer")
+    cool_camera["Parent"] = {'$ref': parent_id}
+    cool_camera["Temperature"] = camera_temperature
+    cool_camera["Duration"] = 0
+    update_obj_ids(cool_camera)
+    start_obj["Items"]["$values"] = [cool_camera]
+
+    # Unpark mount.
+    unpark = create_object("NINA.Sequencer.SequenceItem.Telescope.UnparkScope, NINA.Sequencer")
+    unpark["Parent"] = {'$ref': parent_id}
+    update_obj_ids(unpark)
+    start_obj["Items"]["$values"].append(unpark)
+
+    # Set sidereal tracking.
+    sidereal = create_object("NINA.Sequencer.SequenceItem.Telescope.SetTracking, NINA.Sequencer")
+    sidereal["Parent"] = {'$ref': parent_id}
+    sidereal["TrackingMode"] = 0
+    update_obj_ids(sidereal)
+    start_obj["Items"]["$values"].append(sidereal)
+
+    update_obj_ids(start_obj)
+    return start_obj
+    
+def create_seq_end_obj(parent_id):
+    end_obj = create_object("NINA.Sequencer.Container.SequentialContainer, NINA.Sequencer",
+        init_base_id=True, init_conditions=True, init_items=True, init_triggers=False)
+    end_obj["Name"] = "End Items"
+    end_obj["Parent"] = {'$ref': parent_id}
+    end_obj["Strategy"] = {"$type": "NIA.Sequencer.Container.ExecutionStrategy.SequentialStrategy, NINA.Sequencer"}
+
+    # Add in the start items here.
+
+    # Set stopped tracking.
+    stopped_tracking = create_object("NINA.Sequencer.SequenceItem.Telescope.SetTracking, NINA.Sequencer")
+    stopped_tracking["Parent"] = {'$ref': parent_id}
+    stopped_tracking["TrackingMode"] = 5
+    update_obj_ids(stopped_tracking)
+    end_obj["Items"]["$values"].append(stopped_tracking)
+
+    update_obj_ids(end_obj)
+    return end_obj
+
 # This function creates a focal length object.
 # It will automatically encapsulate the loop and
 # checking behaviour in it.
@@ -292,8 +345,11 @@ def create_sequence_json(frames):
     start_container["Name"] = "Start"
     start_container["Conditions"]["$id"] = get_id_num() # Update ID.
     start_container["Items"]["$id"] = get_id_num() # Update ID.
+    start_item = create_seq_start_obj(start_container["$id"])
+    start_container["Items"]["$values"] = [start_item]
     start_container["Triggers"]["$id"] = get_id_num() # Update ID.
     start_container["$type"] = "NINA.Sequencer.Container.StartAreaContainer, NINA.Sequencer"
+
     values.append(start_container)
     # Target Area Container.
     target_area_container = copy.deepcopy(base_container)
@@ -385,6 +441,12 @@ def create_sequence_json(frames):
             fl_obj = create_focal_length_object(frame_id, f["FL"])
             seq_tasks.append(fl_obj)
 
+        # Start autoguiding.
+        start_autoguiding = create_object("NINA.Sequencer.SequenceItem.Guider.StartGuiding, NINA.Sequencer")
+        start_autoguiding["Parent"] = {'$ref': frame_id}
+        update_obj_ids(start_autoguiding)
+        seq_tasks.append(start_autoguiding)
+
         # Add exposures for each filter.
         for filter in filters_exp.keys():
             # Create a new container for this filter.
@@ -446,7 +508,12 @@ def create_sequence_json(frames):
             update_obj_ids(filter_container)
             seq_tasks.append(filter_container)
 
-            
+        # Stop autoguiding.
+        stop_autoguiding = create_object("NINA.Sequencer.SequenceItem.Guider.StopGuiding, NINA.Sequencer")
+        stop_autoguiding["Parent"] = {'$ref': frame_id}
+        update_obj_ids(stop_autoguiding)
+        seq_tasks.append(stop_autoguiding)
+
         container["Items"]["$values"] = seq_tasks
         # Trigger IDs last.
         update_obj_ids(container)
@@ -464,6 +531,10 @@ def create_sequence_json(frames):
     end_container["Name"] = "End"
     end_container["Conditions"]["$id"] = get_id_num() # Update ID.
     end_container["Items"]["$id"] = get_id_num() # Update ID.
+
+    end_obj = create_seq_end_obj(end_container["$id"])
+    end_container["Items"]["$values"] = [end_obj]
+
     end_container["Triggers"]["$id"] = get_id_num() # Update ID.
     end_container["$type"] = "NINA.Sequencer.Container.EndAreaContainer, NINA.Sequencer"
     values.append(end_container)
