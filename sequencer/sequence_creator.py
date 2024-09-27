@@ -15,6 +15,7 @@ interval_fl_read_s = 0.5
 # Generate Input Frames
 input_frames_file = open("input_frames.csv", 'r')
 always_slew = True
+always_sync = True
 
 input_frames = csv.reader(input_frames_file)
 frames = []
@@ -213,6 +214,15 @@ def create_fl_var_set_obj(parent_id, value):
     }
     return var_obj
 
+def create_phd_sync_obj(parent_id):
+    sync_obj = create_object("NINA.Sequencer.SequenceItem.Utility.ExternalScript, NINA.Sequencer",
+        init_base_id=True, init_conditions=False, init_items=False, init_triggers=False)
+    sync_obj["Parent"] = {'$ref': parent_id}
+    # Shortcut to PHD Sync script.
+    sync_obj["Script"] = "C:\\SprinterDFL\\phd_sync.bat.lnk"
+    update_obj_ids(sync_obj)
+    return sync_obj
+
 def create_seq_start_obj(parent_id):
     start_obj = create_object("NINA.Sequencer.Container.SequentialContainer, NINA.Sequencer",
         init_base_id=True, init_conditions=True, init_items=True, init_triggers=False)
@@ -379,7 +389,7 @@ def create_sequence_json(frames):
         container["Items"]["$id"] = get_id_num() # Update ID since we didn't do it on container init.
         target = create_object("NINA.Astrometry.InputTarget, NINA.Astrometry")
         target["PositionAngle"] = 0 # Update later if we want positional angle.
-        target["TargetName"] = f"Frame {i+1}/{len(frames)}"
+        target["TargetName"] = f"Frame_{i+1:05d}"
         # Convert RA and DEC to hms and dms.
         # RA is in hours, DEC is in degrees.
         (ra_hrs, ra_min, ra_sec) = decdeg2hms(f['RA'] * 15)
@@ -419,6 +429,7 @@ def create_sequence_json(frames):
                 "DecSeconds": dec_sec,
             }
             update_obj_ids(slew)
+            
             seq_tasks.append(slew)
 
         # Now, we add the instructions for this frame.
@@ -440,6 +451,14 @@ def create_sequence_json(frames):
         if f["zoom"]:
             fl_obj = create_focal_length_object(frame_id, f["FL"])
             seq_tasks.append(fl_obj)
+
+        # If we are changing focal lengths or mount positions,
+        # Do it here. This will be done after autofocus.
+        # Also provides an `always_sync` option for forced syncing.
+        if f["zoom"] or f["slew"] or always_sync:
+            # Add sync task for focal length change.
+            sync_obj = create_phd_sync_obj(frame_id)
+            seq_tasks.append(sync_obj)
 
         # Start autoguiding.
         start_autoguiding = create_object("NINA.Sequencer.SequenceItem.Guider.StartGuiding, NINA.Sequencer")

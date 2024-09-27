@@ -25,7 +25,6 @@ new_file_name = ""
 should_remove = False
 date = datetime.now()
 
-"""
 with Guider(host) as guider:
 
     guider.Connect()
@@ -41,9 +40,6 @@ with Guider(host) as guider:
     print(f"Using profile: {selected_profile}")
     guider.ConnectEquipment(selected_profile)
 
-    # print("Stopping guiding...")
-    # guider.StopCapture()
-
     print("Starting capture...")
     current_pwd = os.getcwd()
     filename = guider.SaveImage()
@@ -57,10 +53,8 @@ with Guider(host) as guider:
 
 # We're done capturing.
 
-"""
-
 # Temp code to test the solver.
-saved_image_path = "C:\\Users\\mango\\AppData\\Local\\phd2\\3.42-0000_2024-08-31_23-39-19_180.00s.fits"
+# saved_image_path = "C:\\Users\\mango\\AppData\\Local\\phd2\\3.42-0000_2024-08-31_23-39-19_180.00s.fits"
 containing_folder = "C:\\Users\\mango\\AppData\\Local\\phd2"
 
 saved_output_path = os.path.join(containing_folder, 'output-{date:%Y-%m-%d_%H-%M-%S}.ini'.format(date=date))
@@ -69,16 +63,33 @@ subprocess.run([astap_path,
                 '-o', saved_output_path,
                 #'-r', '10',
                 #'-fov', '25',
-                '-r', '50'
+                '-r', '30'
                 #'-spd', '0',
                 #'-t', '0.01',
                 #'-s', '300',
                 #'-m', '5',
-                ])
+        ])
+
 
 # Open output file.
+with open(saved_output_path, 'r') as f:
+    file_lines = f.readlines()
+    ra, dec = None, None
+    for line in file_lines:
+        if "ERROR" in line:
+                message = line.split('=')[1].strip()
+                print(f"Failed to solve image: {message}")
+                sys.exit(1)
+        if "CRVAL1" in line:
+            ra = float(line.split('=')[1].strip())
+        if "CRVAL2" in line:
+            dec = float(line.split('=')[1].strip())
+    if ra is None or dec is None:
+        print("Failed to solve image.")
+        sys.exit(1)
 
-
+# Convert RA into hours.
+ra = ra / 15
 
 # Connect to telescope through Alpyca.
 # Note: Use ASCOM remote to setup Windows devices on this.
@@ -90,7 +101,7 @@ try:
     print(T.Description)
     T.Tracking = True               # Needed for slewing (see below)
     print('Starting sync...')
-    T.SyncToCoordinates(11, 30.5)       # Sync to RA/DEC (0, 0)
+    T.SyncToCoordinates(ra, dec)       # Sync to RA/DEC (0, 0)
     print('Sync complete.')
 except Exception as e:              # Should catch specific InvalidOperationException
     print(f'Sync failed: {str(e)}')
