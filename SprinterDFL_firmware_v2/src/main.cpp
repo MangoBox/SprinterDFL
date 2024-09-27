@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <TimerOne.h>
 
 // Pin assignments
 #define STEP_PIN           4
@@ -19,8 +20,8 @@
 #define BUTTON_DEBOUNCE_MS 50
 
 // Direction definitions
-#define DIR_OUT            HIGH
-#define DIR_IN             LOW
+#define DIR_OUT            LOW
+#define DIR_IN             HIGH
 #define HOMING_DIR         DIR_IN
 // Homing pos delta.
 // Basically, how far the motor should move after homing to reach zero.
@@ -63,7 +64,6 @@ enum StepMode {
 
 int32_t  step_index             = 0;
 int32_t  target                 = 0;
-uint32_t last_step_time         = 0;
 bool     last_step_pin_state    = false;
 uint8_t  heater_power           = 0;
 bool     last_up_button_state   = false;
@@ -71,6 +71,7 @@ uint32_t last_up_button_time    = 0;
 bool     last_down_button_state = false;
 uint32_t last_down_button_time  = 0;
 uint8_t  direction              = DIR_IN;
+bool     new_state              = false;
 
 // Function prototypes
 void     handle_step();
@@ -83,6 +84,8 @@ float    measure_voltage();
 void     print_mode();
 
 enum StepMode stepMode = HOMING;
+
+#include <TimerOne.h>
 
 uint32_t get_move_interval(StepMode mode) {
   switch(mode) {
@@ -118,13 +121,14 @@ void setup() {
   digitalWrite(MS1, LOW);
   digitalWrite(MS2, LOW);
  
+  Timer1.initialize();
+  Timer1.attachInterrupt(handle_step);
   set_mode(HOMING);
   COMM_SERIAL.println("DFL: Started homing...");
 }
 
 
 void loop() {
-  handle_step();
   handle_input();
   handle_buttons();
   handle_heater();
@@ -146,23 +150,36 @@ void print_mode() {
 void set_mode(StepMode mode) {
   stepMode = mode;
   digitalWrite(STEP_EN_PIN, !(mode != IDLE || ENABLED_WHEN_IDLE));
-  switch(stepMode) {
-    case MOVING:
-      COMM_SERIAL.println("DFL: MOVING");
-      return;
-    case HOMING:
-      COMM_SERIAL.println("DFL: HOMING");
-      return;
-    case IDLE:
-      COMM_SERIAL.println("DFL: IDLE");
-      return;
-    default:
-      COMM_SERIAL.println("DFL: Entered unknown state.");
-      return;
+  Timer1.setPeriod(get_move_interval(mode));
+  if (mode != IDLE) {
+    Timer1.start();
+  } else {
+    Timer1.stop();
   }
+  // We can't write these serial values in the interrupt handler,
+  // which this function is sometimes called from.
+  // So, we set a flag to write them in the main loop.
+  new_state = true;
 }
 
 void handle_input() {
+  if(new_state) {
+    new_state = false;
+    switch(stepMode) {
+      case MOVING:
+        COMM_SERIAL.println("DFL: MOVING");
+        return;
+      case HOMING:
+        COMM_SERIAL.println("DFL: HOMING");
+        return;
+      case IDLE:
+        COMM_SERIAL.println("DFL: IDLE");
+        return;
+      default:
+        COMM_SERIAL.println("DFL: Entered unknown state.");
+        return;
+    }
+  }
   if(COMM_SERIAL.available() > 0) {
     // Does this work?
     String input = COMM_SERIAL.readStringUntil('\n');
@@ -232,11 +249,6 @@ void handle_input() {
 }
 
 void handle_step() {
-  // Moving or homing
-  if(stepMode != IDLE) {
-    //Get the moving interval in microseconds and then
-    // step the motor if it's time to move it.
-    int32_t moving_interval = get_move_interval(stepMode);
     if(stepMode == HOMING) {
       // Handle homing.
       // We just reached the homing pos.
@@ -246,7 +258,6 @@ void handle_step() {
         set_mode(IDLE);
         step_index = HOMING_REF_POS;
         target     = 0;
-        COMM_SERIAL.println("DFL: Finished homing.");
       }
       digitalWrite(DIR_PIN, HOMING_DIR);
     } else if (stepMode == MOVING) {
@@ -262,43 +273,24 @@ void handle_step() {
       if(step_index == target) {
         // We're done moving.
         set_mode(IDLE);
-        COMM_SERIAL.println("DFL: Finished moving.");
       }
     }
-   
     // Handle the step functions.
-
-    // We need to divide `moving_interval` by 2 so we'll get
-    // half-wave cycles between HIGH and LOW.
-    // This function should be overflow safe.
-    if(micros() - last_step_time > moving_interval / 2) {
-      last_step_pin_state = !last_step_pin_state;
-      digitalWrite(STEP_PIN, last_step_pin_state);
-      last_step_time = micros();
-      // If we have just started a new step,
-      if(last_step_pin_state) {
-        // Add one to step index if out,
-        // subtract if in.
-        if(direction == DIR_OUT) {
-          step_index += 1;
-        } else if(direction == DIR_IN) {
-          step_index -= 1;
-        } else {
-          // ERROR
-          // assert(false, "Unknown direction.");
-        }
+    last_step_pin_state = !last_step_pin_state;
+    digitalWrite(STEP_PIN, last_step_pin_state);
+    // If we have just started a new step,
+    if(last_step_pin_state) {
+      // Add one to step index if out,
+      // subtract if in.
+      if(direction == DIR_OUT) {
+        step_index += 1;
+      } else if(direction == DIR_IN) {
+        step_index -= 1;
+      } else {
+        // ERROR
+        // assert(false, "Unknown direction.");
       }
     }
-  } else {
-    // Handle idling.
-    // If we're currently idling,
-    // and a new step_index has been asserted,
-    // start moving.
-    if(step_index != target) {
-      COMM_SERIAL.println("DFL: Moving to " + (String)target + " steps.");
-      set_mode(MOVING);
-    }
-  }
 }
 
 void handle_buttons() {
