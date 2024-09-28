@@ -17,6 +17,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         public double _minValue = 0;
         public double _maxValue = 0;
 	public FLStepController step_controller;
+	public ParkedController parked_controller;
 	
 	// Converts focal length [mm] to a whole number of steps
 	public int fl_to_steps(double focal_length) {
@@ -39,6 +40,10 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 		// TODO: If the value is out of range, should we throw an error?
 		double clamped_value = clampRange(value);
 		step_controller.currentValue = fl_to_steps(clamped_value);
+		if(step_controller.currentValue == 0) {
+		    // We need to park!
+		    parked_controller.currentValue = 1;
+		}
             }
         }
 
@@ -46,11 +51,13 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             short switchID,
             double minFL,
             double maxFL,
-	    FLStepController step_controller
+	    FLStepController step_controller,
+	    ParkedController parked_controller
          ) : base(switchID) {
            this._minValue = minFL;
            this._maxValue = maxFL; 
 	   this.step_controller = step_controller;
+	   this.parked_controller = parked_controller;
          }
     }
 }

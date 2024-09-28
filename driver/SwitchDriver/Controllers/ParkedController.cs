@@ -37,7 +37,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 }
             }
             set {
-                if(SwitchHardware.serialPort.IsOpen && isInRange(value)) {
+                if(SwitchHardware.serialPort.IsOpen && isInRange(value) && value == 1) {
                     // Tell DFL system to home/park.
                     SwitchHardware.serialPort.WriteLine("DFL:HOME");
 		    // Note that we don't set the current value here,

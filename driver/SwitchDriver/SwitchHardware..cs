@@ -56,14 +56,13 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static Lens currentLens;
 	    internal static SerialPort serialPort;
 	
-	// We need a pre-initialised instance of the FLStepController
-	// so we can pass it in to the FocalLengthController.
-	FLStepController step_controller = new FLStepController(1, 100000);
+	ParkedController parked_controller = new ParkedController(1);
+	FLStepController step_controller = new FLStepController(1, 100000, parked_controller);
 
         private static Controller[] controllers = {
             new FocalLengthController(0, 16, 300, step_controller),
 	    step_controller,
-	    new ParkedController(2),
+	    parked_controller,
             new DewHeaterPower(3),
             new SupplyVoltage(4),
 	    new MovingController(5)
