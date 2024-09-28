@@ -26,5 +26,17 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         public bool isInRange(double value) {
             return value <= maxValue && value >= minValue;
         }
+
+	public double clampRange(double value) {
+	   if isInRange(value) {
+              return value;
+	   } else if (value >= maxValue) {
+	      return maxValue;
+	   } else if (value <= minValue) {
+	      return minValue;
+	   }
+	   // TODO: Raise error
+	   return value;
+	}
     }
 }

@@ -44,17 +44,24 @@
 
 // Command Definitions
 #define DFL_MOVE_COMMAND    "DFL:MOVE"
+#define DFL_REL_COMMAND     "DFL:REL"
 #define DFL_GET_COMMAND     "DFL:GET"
 #define DFL_HOME_COMMAND    "DFL:HOME"
 #define DFL_ABORT_COMMAND   "DFL:ABORT"
 #define DFL_HEATER_COMMAND  "DFL:HEATER"
 #define DFL_VOLTAGE_COMMAND "DFL:VOLTAGE"
+#define DFL_LIM_COMMAND     "DFL:LIMIT"
 
 // Steps per second
 #define HOMING_SPEED 200
 #define MOVING_SPEED 500
 #define IDLE_SPEED 0
 #define ENABLED_WHEN_IDLE false
+
+// Provides a more detailed serial debug option.
+// During driver operation, this should be disabled.
+// TODO: We could also set this up on a different SoftwareSerial or something.
+#define SERIAL_DEBUG true
 
 enum StepMode {
   HOMING,
@@ -102,7 +109,7 @@ void setup() {
   COMM_SERIAL.begin(SERIAL_SPEED);
   // Do nothing until serial is connected.
   while(!COMM_SERIAL);
-  COMM_SERIAL.println("DFL: Beginning initialisation...");
+  print_debug("DFL: Beginning initialisation...");
 
   pinMode(STEP_PIN, OUTPUT);
   pinMode(DIR_PIN, OUTPUT);
@@ -124,7 +131,7 @@ void setup() {
   Timer1.initialize();
   Timer1.attachInterrupt(handle_step);
   set_mode(HOMING);
-  COMM_SERIAL.println("DFL: Started homing...");
+  print_debug("DFL: Started homing...");
 }
 
 
@@ -162,21 +169,28 @@ void set_mode(StepMode mode) {
   new_state = true;
 }
 
+void print_debug(String message) {
+   // Will only print if debug mode is enabled.
+   if(SERIAL_DEBUG) {
+	Serial.println(message);
+   }
+}
+
 void handle_input() {
   if(new_state) {
     new_state = false;
     switch(stepMode) {
       case MOVING:
-        COMM_SERIAL.println("DFL: MOVING");
+        print_debug("DFL: MOVING");
         return;
       case HOMING:
-        COMM_SERIAL.println("DFL: HOMING");
+        print_debug("DFL: HOMING");
         return;
       case IDLE:
-        COMM_SERIAL.println("DFL: IDLE");
+        print_debug("DFL: IDLE");
         return;
       default:
-        COMM_SERIAL.println("DFL: Entered unknown state.");
+        print_debug("DFL: Entered unknown state.");
         return;
     }
   }
@@ -192,58 +206,67 @@ void handle_input() {
       arguments = input.substring(input.indexOf(' ') + 1);
     }
    
-    if(command == DFL_MOVE_COMMAND) {
+    if(command == DFL_MOVE_COMMAND || command == DFL_REL_COMMAND) {
       if(arguments.length() == 0) {
-        COMM_SERIAL.println("DFL: No position provided.");
+        print_debug("DFL: No position provided.");
         return;
       }
       uint32_t move_pos = arguments.toInt();
-      if(move_pos == 0) {
-        COMM_SERIAL.println("DFL: Could not parse position, or provided 0.");
+      if(move_pos == 0 && command == DFL_REL_COMMAND) {
+        print_debug("DFL: Could not parse position, or provided 0.");
         return;
       }
       // Sanity check move position.
-      if(move_pos == step_index) {
-        COMM_SERIAL.println("DFL: Already at that position.");
+      if(move_pos == step_index && command == DFL_MOVE_COMMAND) {
+        debug_print("DFL: Already at that position.");
         return;
       }
+      uint32_t new_target = command == DFL_MOVE_COMMAND ? move_pos : target + move_pos;
       //Set target position, and change to moving mode.
-      set_target(move_pos + target);
-      COMM_SERIAL.println("DFL: Set target to position " + (String)target);
+      set_target(new_target);
+      print_debug("DFL: Set target to position " + (String)new_target);
       set_mode(MOVING);
     } else if (command == DFL_HOME_COMMAND) {
       // Home DFL
       // Clear the rest of the serial buffer since we don't need to read it.
-      COMM_SERIAL.println("DFL: Started homing.");
+      print_debug("DFL: Started homing.");
       set_mode(HOMING);
     } else if (command == DFL_ABORT_COMMAND) {
-      COMM_SERIAL.println("DFL: Aborted movement.");
+      print_debug("DFL: Aborted movement.");
       set_mode(IDLE);
       target = step_index;
     } else if (command == DFL_GET_COMMAND) {
-      COMM_SERIAL.println("DFL: " + (String)step_index + " (Target: " + (String)target + ")");
+      print_debug("DFL: " + (String)step_index + " (Target: " + (String)target + ")");
+      COMM_SERIAL.println(step_index);
       print_mode();
     } else if (command == DFL_HEATER_COMMAND) {
       if (arguments.length() == 0) {
-        COMM_SERIAL.println("DFL: " + (String) heater_power);
+        print_debug("DFL: " + (String) heater_power);
+	COMM_SERIAL.println(heater_power);
         return;
       }
       if (arguments.charAt(0) == '0' && arguments.length() == 1) {
-        COMM_SERIAL.println("DFL: Disabled heater.");
+        print_debug("DFL: Disabled heater.");
         return;
       }
       uint16_t power = arguments.toInt();
+      print_debug("DFL: Set heater power to " + (String)heater_power + "%.");
       if(power <= 0 || power > 100) {
-        COMM_SERIAL.println("DFL: Provide a power value between 0 and 100.");
+        print_debug("DFL: Provide a power value between 0 and 100.");
         return;
       }
       heater_power = (uint8_t)power;
-      COMM_SERIAL.println("DFL: Set heater power to " + (String)heater_power + "%.");
     } else if (command == DFL_VOLTAGE_COMMAND) {
       float voltage = measure_voltage();
-      COMM_SERIAL.println("DFL: Voltage: " + (String)voltage + "V");
+      print_debug("DFL: Voltage: " + (String)voltage + "V");
+      COMM_SERIAL.println(voltage);
+    } else if (command = DFL_LIM_COMMAND) {
+      // Outputs whether the limit switch is currently depressed.
+      uint8_t state = digitalRead(LIM_PIN);
+      debug_print("DFL: Current limit switch state is " + (String)state);
+      COMM_SERIAL.println(state);
     } else {
-      COMM_SERIAL.println("DFL: Unknown command.");
+      print_debug("DFL: Unknown command.");
     }
   }
 }
@@ -295,7 +318,6 @@ void handle_step() {
 
 void handle_buttons() {
   int16_t button_val = analogRead(BUTTON_PIN);
-  //Serial.println((String)button_val + ", abs up: " + (String)abs(button_val - BUTTON_UP));
   bool up_button_state = abs(button_val - BUTTON_UP) < BUTTON_TOLERANCE;
   bool down_button_state = abs(button_val - BUTTON_DOWN) < BUTTON_TOLERANCE;
   // If we just pressed the up button,
@@ -304,7 +326,7 @@ void handle_buttons() {
      && millis() - BUTTON_DEBOUNCE_MS > last_up_button_time)  {
     last_up_button_time = millis();
     set_target(target + BUTTON_STEP_SIZE);
-    COMM_SERIAL.println("DFL: Button UP pressed. Moving out by " + (String)BUTTON_STEP_SIZE + " steps to " + (String)target + ".");
+    debug_print("DFL: Button UP pressed. Moving out by " + (String)BUTTON_STEP_SIZE + " steps to " + (String)target + ".");
   }
   last_up_button_state = up_button_state;
   // If we just pressed the down button,
@@ -313,7 +335,7 @@ void handle_buttons() {
     && millis() - BUTTON_DEBOUNCE_MS > last_down_button_time)  {
     last_down_button_time = millis();
     set_target(target - BUTTON_STEP_SIZE);
-    COMM_SERIAL.println("DFL: Button DOWN pressed. Moving in by " + (String)BUTTON_STEP_SIZE + " steps to " + (String)target + ".");
+    debug_print("DFL: Button DOWN pressed. Moving in by " + (String)BUTTON_STEP_SIZE + " steps to " + (String)target + ".");
   }
   last_down_button_state = down_button_state;
 }
