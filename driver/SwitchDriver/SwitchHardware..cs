@@ -487,7 +487,16 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static bool GetSwitch(short id)
         {
             Validate("GetSwitch", id);
-            return controllers[id].currentValue == 1;
+	    bool state = false;
+	    if(controllers[id].currentValue == controllers[id].maxValue) {
+		    state = true;
+	    }
+	    if(controllers[id].currentValue == controllers[id].minValue) {
+		    state = false;
+	    }
+	    // TODO: Not sure what to do here?
+            LogMessage("GetSwitch", $"GetSwitch({id}) = {state}");
+	    return state;
         }
 
         /// <summary>
