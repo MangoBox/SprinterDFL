@@ -58,6 +58,11 @@
 #define IDLE_SPEED 0
 #define ENABLED_WHEN_IDLE false
 
+// Should we automatically resync to the home position
+// whenever we hit the limit switch?
+#define RESYNC_ON_LIMIT true
+#define LIM_DEBOUNCE_MS 50
+
 // Provides a more detailed serial debug option.
 // During driver operation, this should be disabled.
 // TODO: We could also set this up on a different SoftwareSerial or something.
@@ -79,6 +84,8 @@ bool     last_down_button_state = false;
 uint32_t last_down_button_time  = 0;
 uint8_t  direction              = DIR_IN;
 bool     new_state              = false;
+bool     last_lim_switch_state  = false;
+uint32_t last_lim_switch_time   = 0;
 
 // Function prototypes
 void     handle_step();
@@ -296,6 +303,33 @@ void handle_step() {
       if(step_index == target) {
         // We're done moving.
         set_mode(IDLE);
+      }
+      // If RESYNC_ON_LIMIT is enabled, let's resync
+      // the position if we have hit the limit switch on an
+      // inwards movement. This should let us resync when we
+      // re-approach the inwards limit, without interfering when
+      // we do outwards movements.
+      if(RESYNC_ON_LIMIT) {
+	if(direction == DIR_IN
+	  && !digitalRead(LIM_PIN)
+	  && !last_lim_switch_state
+	  && millis() - LIM_DEBOUNCE_MS > last_lim_switch_time
+	) {
+          // Now, let's resync.
+	  // First set tracking variables for ensuring we don't trigger
+	  // multiple times and when we move out again.
+	  last_lim_switch_state = true;
+	  last_lim_switch_state = millis();
+	  debug_print("DFL: Hit limit switch at position " + (String)step_index ". Resyncing to 0.");
+	  step_index = 0;
+	  // After we have reset our step limit,
+	  // the controller will 'refind' the set target position.
+	}
+	// If our limit switch is no longer depressed,
+	// set our state again.
+	if(digitalRead(LIM_PIN)) {
+	  last_lim_switch_state = false;
+	}
       }
     }
     // Handle the step functions.

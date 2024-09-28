@@ -36,7 +36,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             set {
 		// To set the current value, we need to
 		// feed the existing step position into a correction function.
-		// TODO: If the value is out of range, should we tthrow an error?
+		// TODO: If the value is out of range, should we throw an error?
 		double clamped_value = clampRange(value);
 		step_controller.currentValue = fl_to_steps(clamped_value);
             }

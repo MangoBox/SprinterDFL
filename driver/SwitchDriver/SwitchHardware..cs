@@ -55,11 +55,17 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static TraceLogger tl; // Local server's trace logger object for diagnostic log with information that you specify
         internal static Lens currentLens;
 	    internal static SerialPort serialPort;
+	
+	// We need a pre-initialised instance of the FLStepController
+	// so we can pass it in to the FocalLengthController.
+	FLStepController step_controller = new FLStepController(1, 100000);
 
         private static Controller[] controllers = {
-            new FocalLengthController(0, 16, 300)//,
-            //new DewHeaterPower(1),
-            //new SupplyVoltage(2)
+            new FocalLengthController(0, 16, 300, step_controller)//,
+	    step_controller,
+	    new ParkedController(2),
+            new DewHeaterPower(3),
+            new SupplyVoltage(4)
         };
         private static int numSwitches = controllers.Length;
 

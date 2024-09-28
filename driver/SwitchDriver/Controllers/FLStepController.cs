@@ -41,7 +41,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                     SwitchHardware.serialPort.WriteLine(
                         string.Format("DFL:MOVE {0}", value)); 
                     //TODO: Handle errors if not okay.
-                    currentValue = value;
+		    // We're not writing values here.
+		    // We'll let the DFL system report back
+		    // a correct value.
                 } else {
                     //TODO: Do nothing, and raise error?
                     return;
