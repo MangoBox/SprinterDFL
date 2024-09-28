@@ -61,11 +61,12 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 	FLStepController step_controller = new FLStepController(1, 100000);
 
         private static Controller[] controllers = {
-            new FocalLengthController(0, 16, 300, step_controller)//,
+            new FocalLengthController(0, 16, 300, step_controller),
 	    step_controller,
 	    new ParkedController(2),
             new DewHeaterPower(3),
-            new SupplyVoltage(4)
+            new SupplyVoltage(4),
+	    new MovingController(5)
         };
         private static int numSwitches = controllers.Length;
 
@@ -80,10 +81,12 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 		
 		// Attempt open.
 		serialPort.Open();
+		connectedState = true;
 	}
 
 	static void DisconnectSprinterDFL() {
 		serialPort.Close();
+		connectedState = false;
 	}
 
         /// <summary>
@@ -320,18 +323,12 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 if (value)
                 {
                     LogMessage("Connected Set", $"Connecting to port {comPort}");
-
-                    // TODO insert connect to the device code here
                     ConnectSprinterDFL();
-                    connectedState = true;
                 }
                 else
                 {
                     LogMessage("Connected Set", $"Disconnecting from port {comPort}");
-
-                    // TODO insert disconnect from the device code here
 		    DisconnectSprinterDFL();
-                    connectedState = false;
                 }
             }
         }
@@ -473,11 +470,11 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         /// </returns>
         internal static bool CanWrite(short id)
         {
-            bool writable = true;
+            bool writable = controllers[id].isWritable;
             Validate("CanWrite", id);
             // default behavour is to report true
             LogMessage("CanWrite", $"CanWrite({id}): {writable}");
-            return controllers[id].isWritable;
+            return writable;
         }
 
         #region Boolean switch members
@@ -490,8 +487,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static bool GetSwitch(short id)
         {
             Validate("GetSwitch", id);
-            LogMessage("GetSwitch", $"GetSwitch({id}) - not implemented");
-            throw new MethodNotImplementedException("GetSwitch");
+            return controllers[id].currentValue == 1;
         }
 
         /// <summary>
@@ -508,8 +504,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 LogMessage("SetSwitch", str);
                 throw new MethodNotImplementedException(str);
             }
-            LogMessage("SetSwitch", $"SetSwitch({id}) = {state} - not implemented");
-            throw new MethodNotImplementedException("SetSwitch");
+	    var str = $"SetSwitch({id}) = {state}";
+            LogMessage("SetSwitch", str);
+            controllers[id].currentValue = state ? 1 : 0;
         }
 
         #endregion
@@ -524,8 +521,6 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static double MaxSwitchValue(short id)
         {
             Validate("MaxSwitchValue", id);
-            //LogMessage("MaxSwitchValue", $"MaxSwitchValue({id}) - not implemented");
-            // Example value to begin with.
             return controllers[id].maxValue;
         }
 
@@ -537,8 +532,6 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static double MinSwitchValue(short id)
         {
             Validate("MinSwitchValue", id);
-            // LogMessage("MinSwitchValue", $"MinSwitchValue({id}) - not implemented");
-            // Example value to begin with.
             return controllers[id].minValue;
         }
 
@@ -580,9 +573,6 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 throw new ASCOM.MethodNotImplementedException($"SetSwitchValue({id}) - Cannot write");
             }
             controllers[id].currentValue = value;
-
-            //LogMessage("SetSwitchValue", $"SetSwitchValue({id}) = {value} - not implemented");
-            //throw new MethodNotImplementedException("SetSwitchValue");
         }
 
         #endregion

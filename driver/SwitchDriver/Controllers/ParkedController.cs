@@ -4,10 +4,10 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 
         public override string SwitchName { get { return "DFL Park"; } set { } }
         public override string SwitchDescription { get { return "Controls the park status of the DFL system."; } set { } }
-        public override bool isBool { get { return false; } set { } }
+        public override bool isBool { get { return true; } set { } }
         public override bool isWritable { get { return true; } set { } }
         public override double minValue { get { return 0; } set { } }
-        public override double maxValue { get { return 100; } set { } }
+        public override double maxValue { get { return 1; } set { } }
 
         public override double currentValue {
             get {
@@ -24,6 +24,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 			   return value;
 			}
 			//TODO: Raise error here.
+			return value;
                     }
                     catch (System.FormatException exception)
                     {
@@ -49,7 +50,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 }                
             }
         }
-        public DewHeaterPower (
+        public ParkedController (
             short switchID
          ) : base(switchID) {
          }

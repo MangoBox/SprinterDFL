@@ -51,6 +51,7 @@
 #define DFL_HEATER_COMMAND  "DFL:HEATER"
 #define DFL_VOLTAGE_COMMAND "DFL:VOLTAGE"
 #define DFL_LIM_COMMAND     "DFL:LIMIT"
+#define DFL_MODE_COMMAND    "DFL:MODE"
 
 // Steps per second
 #define HOMING_SPEED 200
@@ -246,6 +247,29 @@ void handle_input() {
       print_debug("DFL: " + (String)step_index + " (Target: " + (String)target + ")");
       COMM_SERIAL.println(step_index);
       print_mode();
+    } else if (command == DFL_MODE_COMMAND) {
+      if(arguments.length() != 0) {
+        print_debug("DFL: Cannot set mode with this command.");
+	return;
+      }
+      switch(stepMode) {
+        case MOVING:
+          print_debug("DFL: MOVING");
+	  COMM_SERIAL.println("MOVING");
+          return;
+        case HOMING:
+          print_debug("DFL: HOMING");
+	  COMM_SERIAL.println("HOMING");
+          return;
+        case IDLE:
+          print_debug("DFL: IDLE");
+	  COMM_SERIAL.println("IDLE");
+          return;
+        default:
+          print_debug("DFL: Entered unknown state.");
+	  COMM_SERIAL.println("UNKNOWN");
+          return;
+
     } else if (command == DFL_HEATER_COMMAND) {
       if (arguments.length() == 0) {
         print_debug("DFL: " + (String) heater_power);
