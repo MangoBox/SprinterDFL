@@ -11,7 +11,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         public abstract bool isWritable { get; set; }
         public abstract double minValue { get; set; }
         public abstract double maxValue { get; set; }
-
+	public abstract double stepSize { get; set; }
         // Current value requires overriding.
         public abstract double currentValue { get; set; }
 
@@ -21,6 +21,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         )
         {
             SwitchID = switchID;
+	    if (isBool && (stepSize != 1 || minValue != 0 || maxValue != 1)) {
+	        throw new DriverException("Did not meet requirements to be registered as a boolean switch.");
+	    }
         }
 
         public bool isInRange(double value) {

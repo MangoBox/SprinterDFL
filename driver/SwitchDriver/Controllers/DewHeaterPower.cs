@@ -8,6 +8,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         public override bool isWritable { get { return true; } set { } }
         public override double minValue { get { return 0; } set { } }
         public override double maxValue { get { return 100; } set { } }
+	public override double stepSize { get { return 1; } set { } }
 
         public override double currentValue {
             get {

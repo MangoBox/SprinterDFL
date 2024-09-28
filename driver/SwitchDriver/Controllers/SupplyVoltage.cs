@@ -8,7 +8,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         public override bool isWritable { get { return false; } set { } }
         public override double minValue { get { return 0; } set { } }
         public override double maxValue { get { return 50; } set { } }
-
+	public override double stepSize { get { return 0.01; } set { } }
         public override double currentValue {
             get {
                 if(SwitchHardware.serialPort.IsOpen) {
@@ -24,6 +24,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                     {
                         value = 0;
                     }
+		    // TODO: Do we need to round to a reasonable value?
                     return value;
                 } else {
                     // Not open, just return the last value we set.

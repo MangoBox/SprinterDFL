@@ -543,8 +543,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static double SwitchStep(short id)
         {
             Validate("SwitchStep", id);
-            LogMessage("SwitchStep", $"SwitchStep({id}) - not implemented");
-            throw new MethodNotImplementedException("SwitchStep");
+	    return controllers[id].stepSize;
         }
 
         /// <summary>
