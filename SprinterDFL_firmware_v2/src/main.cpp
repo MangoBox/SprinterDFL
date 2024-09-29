@@ -61,13 +61,13 @@
 
 // Should we automatically resync to the home position
 // whenever we hit the limit switch?
-#define RESYNC_ON_LIMIT true
+#define RESYNC_ON_LIMIT false
 #define LIM_DEBOUNCE_MS 50
 
 // Provides a more detailed serial debug option.
 // During driver operation, this should be disabled.
 // TODO: We could also set this up on a different SoftwareSerial or something.
-#define SERIAL_DEBUG true
+#define SERIAL_DEBUG false
 
 enum StepMode {
   HOMING,
@@ -111,6 +111,13 @@ uint32_t get_move_interval(StepMode mode) {
     default:
       return 0; // Raise an error?
   }
+}
+
+void print_debug(String message) {
+   // Will only print if debug mode is enabled.
+   if(SERIAL_DEBUG) {
+	Serial.println(message);
+   }
 }
 
 void setup() {
@@ -177,12 +184,6 @@ void set_mode(StepMode mode) {
   new_state = true;
 }
 
-void print_debug(String message) {
-   // Will only print if debug mode is enabled.
-   if(SERIAL_DEBUG) {
-	Serial.println(message);
-   }
-}
 
 void handle_input() {
   if(new_state) {
@@ -226,7 +227,7 @@ void handle_input() {
       }
       // Sanity check move position.
       if(move_pos == step_index && command == DFL_MOVE_COMMAND) {
-        debug_print("DFL: Already at that position.");
+        print_debug("DFL: Already at that position.");
         return;
       }
       uint32_t new_target = command == DFL_MOVE_COMMAND ? move_pos : target + move_pos;
@@ -250,30 +251,30 @@ void handle_input() {
     } else if (command == DFL_MODE_COMMAND) {
       if(arguments.length() != 0) {
         print_debug("DFL: Cannot set mode with this command.");
-	return;
+	      return;
       }
       switch(stepMode) {
         case MOVING:
           print_debug("DFL: MOVING");
-	  COMM_SERIAL.println("MOVING");
+	        COMM_SERIAL.println("MOVING");
           return;
         case HOMING:
           print_debug("DFL: HOMING");
-	  COMM_SERIAL.println("HOMING");
+	        COMM_SERIAL.println("HOMING");
           return;
         case IDLE:
           print_debug("DFL: IDLE");
-	  COMM_SERIAL.println("IDLE");
+	        COMM_SERIAL.println("IDLE");
           return;
         default:
           print_debug("DFL: Entered unknown state.");
-	  COMM_SERIAL.println("UNKNOWN");
+	        COMM_SERIAL.println("UNKNOWN");
           return;
-
+      }  
     } else if (command == DFL_HEATER_COMMAND) {
       if (arguments.length() == 0) {
         print_debug("DFL: " + (String) heater_power);
-	COMM_SERIAL.println(heater_power);
+	      COMM_SERIAL.println(heater_power);
         return;
       }
       if (arguments.charAt(0) == '0' && arguments.length() == 1) {
@@ -291,10 +292,10 @@ void handle_input() {
       float voltage = measure_voltage();
       print_debug("DFL: Voltage: " + (String)voltage + "V");
       COMM_SERIAL.println(voltage);
-    } else if (command = DFL_LIM_COMMAND) {
+    } else if (command == DFL_LIM_COMMAND) {
       // Outputs whether the limit switch is currently depressed.
       uint8_t state = digitalRead(LIM_PIN);
-      debug_print("DFL: Current limit switch state is " + (String)state);
+      print_debug("DFL: Current limit switch state is " + (String)state);
       COMM_SERIAL.println(state);
     } else {
       print_debug("DFL: Unknown command.");
@@ -312,6 +313,9 @@ void handle_step() {
         set_mode(IDLE);
         step_index = HOMING_REF_POS;
         target     = 0;
+        // We don't want to continue with the
+        // other movement logic.
+        return;
       }
       digitalWrite(DIR_PIN, HOMING_DIR);
     } else if (stepMode == MOVING) {
@@ -334,26 +338,26 @@ void handle_step() {
       // re-approach the inwards limit, without interfering when
       // we do outwards movements.
       if(RESYNC_ON_LIMIT) {
-	if(direction == DIR_IN
-	  && !digitalRead(LIM_PIN)
-	  && !last_lim_switch_state
-	  && millis() - LIM_DEBOUNCE_MS > last_lim_switch_time
-	) {
-          // Now, let's resync.
-	  // First set tracking variables for ensuring we don't trigger
-	  // multiple times and when we move out again.
-	  last_lim_switch_state = true;
-	  last_lim_switch_state = millis();
-	  debug_print("DFL: Hit limit switch at position " + (String)step_index ". Resyncing to 0.");
-	  step_index = 0;
-	  // After we have reset our step limit,
-	  // the controller will 'refind' the set target position.
-	}
-	// If our limit switch is no longer depressed,
-	// set our state again.
-	if(digitalRead(LIM_PIN)) {
-	  last_lim_switch_state = false;
-	}
+        if(direction == DIR_IN
+          && !digitalRead(LIM_PIN)
+          && !last_lim_switch_state
+          && millis() - LIM_DEBOUNCE_MS > last_lim_switch_time
+        ) {
+                // Now, let's resync.
+          // First set tracking variables for ensuring we don't trigger
+          // multiple times and when we move out again.
+          last_lim_switch_state = true;
+          last_lim_switch_state = millis();
+          print_debug("DFL: Hit limit switch at position " + (String)step_index + ". Resyncing to 0.");
+          step_index = 0;
+          // After we have reset our step limit,
+          // the controller will 'refind' the set target position.
+        }
+        // If our limit switch is no longer depressed,
+        // set our state again.
+        if(digitalRead(LIM_PIN)) {
+          last_lim_switch_state = false;
+        }
       }
     }
     // Handle the step functions.
@@ -384,7 +388,7 @@ void handle_buttons() {
      && millis() - BUTTON_DEBOUNCE_MS > last_up_button_time)  {
     last_up_button_time = millis();
     set_target(target + BUTTON_STEP_SIZE);
-    debug_print("DFL: Button UP pressed. Moving out by " + (String)BUTTON_STEP_SIZE + " steps to " + (String)target + ".");
+    print_debug("DFL: Button UP pressed. Moving out by " + (String)BUTTON_STEP_SIZE + " steps to " + (String)target + ".");
   }
   last_up_button_state = up_button_state;
   // If we just pressed the down button,
@@ -393,7 +397,7 @@ void handle_buttons() {
     && millis() - BUTTON_DEBOUNCE_MS > last_down_button_time)  {
     last_down_button_time = millis();
     set_target(target - BUTTON_STEP_SIZE);
-    debug_print("DFL: Button DOWN pressed. Moving in by " + (String)BUTTON_STEP_SIZE + " steps to " + (String)target + ".");
+    print_debug("DFL: Button DOWN pressed. Moving in by " + (String)BUTTON_STEP_SIZE + " steps to " + (String)target + ".");
   }
   last_down_button_state = down_button_state;
 }

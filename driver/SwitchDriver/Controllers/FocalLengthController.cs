@@ -13,15 +13,15 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         public override bool isWritable { get { return true; } set { } }
         public override double minValue { get { return _minValue; } set { _minValue = value; } }
         public override double maxValue { get { return _maxValue; } set { _maxValue = value; } }
-	public override double stepSize { get { return 0.01; } set { } }
+		public override double stepSize { get { return 0.01; } set { } }
         public double _minValue = 0;
         public double _maxValue = 0;
-	public FLStepController step_controller;
-	public ParkedController parked_controller;
+		public FLStepController step_controller = SwitchHardware.step_controller;
+		public ParkedController parked_controller = SwitchHardware.parked_controller;
 	
 	// Converts focal length [mm] to a whole number of steps
 	public int fl_to_steps(double focal_length) {
-		return int(focal_length) / 1000;
+		return (int)(focal_length / 1000.0);
 	}
 
 	// Converts a whole number of steps to focal length [mm]
@@ -31,33 +31,33 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 
         public override double currentValue {
             get {
-		// Return the current converted focal length.
-		return steps_to_fl(step_controller.currentValue);
+				if (step_controller == null)
+				{
+					return 0;
+				}
+				// Return the current converted focal length.
+				return steps_to_fl((int)step_controller.currentValue);
             }
             set {
-		// To set the current value, we need to
-		// feed the existing step position into a correction function.
-		// TODO: If the value is out of range, should we throw an error?
-		double clamped_value = clampRange(value);
-		step_controller.currentValue = fl_to_steps(clamped_value);
-		if(step_controller.currentValue == 0) {
-		    // We need to park!
-		    parked_controller.currentValue = 1;
-		}
-            }
+				// To set the current value, we need to
+				// feed the existing step position into a correction function.
+				// TODO: If the value is out of range, should we throw an error?
+				double clamped_value = clampRange(value);
+				step_controller.currentValue = fl_to_steps(clamped_value);
+				if(step_controller.currentValue == 0) {
+					// We need to park!
+					parked_controller.currentValue = 1;
+				}
+			}
         }
 
         public FocalLengthController (
             short switchID,
             double minFL,
-            double maxFL,
-	    FLStepController step_controller,
-	    ParkedController parked_controller
+            double maxFL
          ) : base(switchID) {
            this._minValue = minFL;
-           this._maxValue = maxFL; 
-	   this.step_controller = step_controller;
-	   this.parked_controller = parked_controller;
-         }
+           this._maxValue = maxFL;
+        }
     }
 }

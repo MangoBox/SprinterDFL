@@ -55,17 +55,21 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static TraceLogger tl; // Local server's trace logger object for diagnostic log with information that you specify
         internal static Lens currentLens;
 	    internal static SerialPort serialPort;
-	
-	ParkedController parked_controller = new ParkedController(1);
-	FLStepController step_controller = new FLStepController(1, 100000, parked_controller);
+
+        public static FocalLengthController focal_length_controller = new FocalLengthController(0, 16, 300);
+	    public static FLStepController step_controller = new FLStepController(1, 100000);
+        public static ParkedController parked_controller = new ParkedController(2);
+        public static DewHeaterPower dew_heater_controller = new DewHeaterPower(3);
+        public static SupplyVoltage supply_voltage_controller = new SupplyVoltage(4);
+        public static MovingController moving_controller = new MovingController(5);
 
         private static Controller[] controllers = {
-            new FocalLengthController(0, 16, 300, step_controller),
-	    step_controller,
-	    parked_controller,
-            new DewHeaterPower(3),
-            new SupplyVoltage(4),
-	    new MovingController(5)
+            focal_length_controller,
+	        step_controller,
+	        parked_controller,
+            dew_heater_controller,
+            supply_voltage_controller,
+            moving_controller
         };
         private static int numSwitches = controllers.Length;
 
@@ -82,6 +86,10 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 		serialPort.Open();
 		connectedState = true;
 	}
+
+    static string getSwitchName(short id) {
+            return controllers[id].SwitchName;
+    }
 
 	static void DisconnectSprinterDFL() {
 		serialPort.Close();
@@ -472,7 +480,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             bool writable = controllers[id].isWritable;
             Validate("CanWrite", id);
             // default behavour is to report true
-            LogMessage("CanWrite", $"CanWrite({id}): {writable}");
+            LogMessage("CanWrite", $"CanWrite({getSwitchName(id)}): {writable}");
             return writable;
         }
 
@@ -486,16 +494,16 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static bool GetSwitch(short id)
         {
             Validate("GetSwitch", id);
-	    bool state = false;
-	    if(controllers[id].currentValue == controllers[id].maxValue) {
-		    state = true;
-	    }
-	    if(controllers[id].currentValue == controllers[id].minValue) {
-		    state = false;
-	    }
-	    // TODO: Not sure what to do here?
-            LogMessage("GetSwitch", $"GetSwitch({id}) = {state}");
-	    return state;
+	        bool state = false;
+	        if(controllers[id].currentValue == controllers[id].maxValue) {
+		        state = true;
+	        }
+	        if(controllers[id].currentValue == controllers[id].minValue) {
+		        state = false;
+	        }
+	        // TODO: Not sure what to do here?
+            LogMessage("GetSwitch", $"GetSwitch({getSwitchName(id)}) = {state}");
+	        return state;
         }
 
         /// <summary>
@@ -506,13 +514,13 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static void SetSwitch(short id, bool state)
         {
             Validate("SetSwitch", id);
+            var str = $"SetSwitch({getSwitchName(id)}) = {state}";
             if (!CanWrite(id))
             {
-                var str = $"SetSwitch({id}) - Cannot Write";
+                str = $"SetSwitch({getSwitchName(id)}) - Cannot Write";
                 LogMessage("SetSwitch", str);
                 throw new MethodNotImplementedException(str);
             }
-	    var str = $"SetSwitch({id}) = {state}";
             LogMessage("SetSwitch", str);
             controllers[id].currentValue = state ? 1 : 0;
         }
@@ -563,7 +571,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static double GetSwitchValue(short id)
         {
             Validate("GetSwitchValue", id);
-            return controllers[id].currentValue;
+            double value = controllers[id].currentValue;
+            LogMessage("GetSwitchValue", $"GetSwitchValue({id}) = {value}");
+            return value;
         }
 
         /// <summary>
@@ -576,9 +586,10 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
             Validate("SetSwitchValue", id, value);
             if (!CanWrite(id))
             {
-                LogMessage("SetSwitchValue", $"SetSwitchValue({id}) - Cannot write");
+                LogMessage("SetSwitchValue", $"SetSwitchValue({getSwitchName(id)}) - Cannot write");
                 throw new ASCOM.MethodNotImplementedException($"SetSwitchValue({id}) - Cannot write");
             }
+            LogMessage("SetSwitchValue", $"SetSwitchValue({getSwitchName(id)}) = {value}");
             controllers[id].currentValue = value;
         }
 

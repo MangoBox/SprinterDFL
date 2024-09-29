@@ -37,7 +37,6 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                     SwitchHardware.serialPort.WriteLine(
                         string.Format("DFL:HEATER {0}", value)); 
                     //TODO: Handle errors if not okay.
-                    currentValue = value;
                 } else {
                     //TODO: Do nothing, and raise error?
                     return;
