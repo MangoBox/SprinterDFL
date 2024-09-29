@@ -83,6 +83,7 @@
     <Compile Include="SwitchDriver\Controllers\ParkedController.cs" />
     <Compile Include="SwitchDriver\Controllers\SupplyVoltage.cs" />
     <Compile Include="SwitchDriver\LensHandler.cs" />
+    <Compile Include="SwitchDriver\SerialDriver.cs" />
     <Compile Include="SwitchDriver\SwitchDriver.cs" />
     <Compile Include="SwitchDriver\SwitchHardware..cs" />
     <Compile Include="frmMain.cs">

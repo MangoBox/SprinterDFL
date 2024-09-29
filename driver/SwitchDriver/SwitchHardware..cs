@@ -54,10 +54,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         internal static AstroUtils astroUtilities; // ASCOM AstroUtilities object for use as required
         internal static TraceLogger tl; // Local server's trace logger object for diagnostic log with information that you specify
         internal static Lens currentLens;
-	    internal static SerialPort serialPort;
 
+        public static FLStepController step_controller = new FLStepController(1, 100000);
         public static FocalLengthController focal_length_controller = new FocalLengthController(0, 16, 300);
-	    public static FLStepController step_controller = new FLStepController(1, 100000);
         public static ParkedController parked_controller = new ParkedController(2);
         public static DewHeaterPower dew_heater_controller = new DewHeaterPower(3);
         public static SupplyVoltage supply_voltage_controller = new SupplyVoltage(4);
@@ -74,26 +73,17 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         private static int numSwitches = controllers.Length;
 
 	static void ConnectSprinterDFL() {
-		serialPort = new SerialPort();
-		serialPort.PortName = comPort;
-		serialPort.BaudRate = baudRate; // probably 9600
-		// Add other init code here.
-
-		serialPort.ReadTimeout = 3000;
-		serialPort.WriteTimeout = 3000;
-		
-		// Attempt open.
-		serialPort.Open();
+        SerialDriver.OpenSerialPort();
 		connectedState = true;
 	}
 
     static string getSwitchName(short id) {
-            return controllers[id].SwitchName;
+        return controllers[id].SwitchName;
     }
 
 	static void DisconnectSprinterDFL() {
-		serialPort.Close();
-		connectedState = false;
+        SerialDriver.CloseSerialPort();
+        connectedState = false;
 	}
 
         /// <summary>
@@ -335,7 +325,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 else
                 {
                     LogMessage("Connected Set", $"Disconnecting from port {comPort}");
-		    DisconnectSprinterDFL();
+		            DisconnectSprinterDFL();
                 }
             }
         }

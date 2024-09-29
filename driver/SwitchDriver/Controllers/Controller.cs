@@ -11,9 +11,40 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
         public abstract bool isWritable { get; set; }
         public abstract double minValue { get; set; }
         public abstract double maxValue { get; set; }
-	public abstract double stepSize { get; set; }
+	    public abstract double stepSize { get; set; }
         // Current value requires overriding.
         public abstract double currentValue { get; set; }
+
+        public double _currentValue = 0;
+
+        public virtual void UpdateValue(string input_string)
+        {
+            double value = 0;
+            try
+            {
+                value = double.Parse(input_string);
+            }
+            catch (System.FormatException exception)
+            {
+                
+            }
+
+            _currentValue = value;
+        }
+
+        public void SendCommand(string command, bool callbackUpdate)
+        {
+            CommandCallback callback;
+            if(callbackUpdate)
+            {
+                callback = new CommandCallback(command, UpdateValue);
+            } else
+            {
+                callback = new CommandCallback(command);
+            }
+            SerialDriver.SendCommand(callback);
+            // Return the previous value in the meantime. Probably need to fix this.
+        }
 
         // Constructor
         public Controller(

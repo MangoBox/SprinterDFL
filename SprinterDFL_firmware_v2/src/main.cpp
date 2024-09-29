@@ -279,6 +279,7 @@ void handle_input() {
       }
       if (arguments.charAt(0) == '0' && arguments.length() == 1) {
         print_debug("DFL: Disabled heater.");
+        heater_power = 0;
         return;
       }
       uint16_t power = arguments.toInt();
@@ -294,7 +295,7 @@ void handle_input() {
       COMM_SERIAL.println(voltage);
     } else if (command == DFL_LIM_COMMAND) {
       // Outputs whether the limit switch is currently depressed.
-      uint8_t state = digitalRead(LIM_PIN);
+      uint8_t state = !digitalRead(LIM_PIN);
       print_debug("DFL: Current limit switch state is " + (String)state);
       COMM_SERIAL.println(state);
     } else {

@@ -11,7 +11,9 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 	public override double stepSize { get { return 0.01; } set { } }
         public override double currentValue {
             get {
-                if(SwitchHardware.serialPort.IsOpen) {
+                SendCommand("DFL:VOLTAGE", true);
+                return _currentValue;
+                /*if(SwitchHardware.serialPort.IsOpen) {
                     SwitchHardware.serialPort.WriteLine("DFL:VOLTAGE");
                     string message = SwitchHardware.serialPort.ReadLine();
                     // Parse message and check values.
@@ -29,7 +31,7 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
                 } else {
                     // Not open, just return the last value we set.
                     return 0;
-                }
+                }*/
             }
             set {
                 // Do nothing, not settable.

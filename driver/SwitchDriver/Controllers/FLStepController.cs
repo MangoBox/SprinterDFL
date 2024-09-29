@@ -1,4 +1,7 @@
 
+using System.ComponentModel;
+using System.Windows.Forms;
+
 namespace ASCOM.LiamDaviesSprinterDFL.Switch
 {
     public class FLStepController : Controller {
@@ -16,36 +19,18 @@ namespace ASCOM.LiamDaviesSprinterDFL.Switch
 
         public override double currentValue {
             get {
-                if(SwitchHardware.serialPort.IsOpen) {
-                    SwitchHardware.serialPort.WriteLine("DFL:GET");
-                    string message = SwitchHardware.serialPort.ReadLine();
-                    SwitchHardware.LogMessage("GetSwitchValue", "Received Serial Message: " + message);
-                    // Parse message and check values.
-                    double value = 0;
-                    try
-                    {
-                        value = double.Parse(message);
-                    }
-                    catch (System.FormatException exception)
-                    {
-                        value = 0;
-                    }
-                    return value;
-                } else {
-                    // Not open, just return the last value we set.
-                    return 0;
-                }
+                SendCommand("DFL:GET", true);
+                // Return the current value of this for the moment.
+                return _currentValue;
             }
-            set {
-                if(SwitchHardware.serialPort.IsOpen && isInRange(value)) {
-                    // Write focal length to serial port.
-                    SwitchHardware.serialPort.WriteLine(
-                        string.Format("DFL:MOVE {0}", value)); 
-                    //TODO: Handle errors if not okay.
-		    // We're not writing values here.
-		    // We'll let the DFL system report back
-		    // a correct value.
-                } else {
+            set
+            {
+                if (isInRange(value))
+                {
+                    SendCommand(string.Format("DFL:MOVE {0}", value), false);
+                }
+                else
+                {
                     //TODO: Do nothing, and raise error?
                     return;
                 }
