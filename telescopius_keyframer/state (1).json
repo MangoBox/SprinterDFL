@@ -1,0 +1,138 @@
+{
+  "sheetsById": {
+    "Camera": {
+      "staticOverrides": {
+        "byObject": {
+          "Keyframes": {
+            "ra": 5.012658227848098,
+            "dec": -3.5569620253164533,
+            "focalLength": 98.68354430379743
+          }
+        }
+      },
+      "sequence": {
+        "subUnitsPerUnit": 30,
+        "length": 10,
+        "type": "PositionalSequence",
+        "tracksByObject": {
+          "Keyframes": {
+            "trackData": {
+              "P6gUjkHP4q": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Keyframes:[\"dec\"]",
+                "keyframes": [
+                  {
+                    "id": "akNamUfoYQ",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "value": -3.5569620253164533
+                  },
+                  {
+                    "id": "4dGIErj9Ss",
+                    "position": 3.533,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "value": -43.71887373336329
+                  },
+                  {
+                    "id": "yoRBv-kRae",
+                    "position": 7.633,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "value": -61.65822784810127
+                  }
+                ]
+              },
+              "rqXU27tTRe": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Keyframes:[\"ra\"]",
+                "keyframes": [
+                  {
+                    "id": "miQyIBhQ5I",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "value": 5.620253164556958
+                  },
+                  {
+                    "id": "nDk5cU4w5l",
+                    "position": 7.633,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "value": 12.303797468354446
+                  }
+                ]
+              },
+              "Pp_a8vwTmG": {
+                "type": "BasicKeyframedTrack",
+                "__debugName": "Keyframes:[\"focalLength\"]",
+                "keyframes": [
+                  {
+                    "id": "NAubeVH3uh",
+                    "position": 0,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "value": 16
+                  },
+                  {
+                    "id": "icC_11RKxc",
+                    "position": 7.633,
+                    "connectedRight": true,
+                    "handles": [
+                      0.5,
+                      1,
+                      0.5,
+                      0
+                    ],
+                    "value": 300
+                  }
+                ]
+              }
+            },
+            "trackIdByPropPath": {
+              "[\"dec\"]": "P6gUjkHP4q",
+              "[\"ra\"]": "rqXU27tTRe",
+              "[\"focalLength\"]": "Pp_a8vwTmG"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitionVersion": "0.4.0",
+  "revisionHistory": [
+    "u9s5X8XmpREqP8NJ",
+    "jcLH8ML59KAmsAe4"
+  ]
+}

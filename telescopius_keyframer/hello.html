@@ -1,0 +1,15 @@
+<html>
+    <head>
+        <script type=”module” src="https://cdn.jsdelivr.net/npm/@theatre/browser-bundles@0.5.0-insiders.88df1ef/dist/core-and-studio.js"></script>
+    </head>
+  <body>
+    <h1>Hello Extensions</h1>
+    <button type="button" onclick="exportKeyframes()">Export NINA Keyframes</button>
+  </body>
+  <script>
+    import { exportJSON } from './scripts/content.js';
+    function exportKeyframes() {
+      exportJSON();
+    }
+    </script>
+</html>

@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "Hello Extensions",
+    "description": "Base Level Extension",
+    "version": "1.0",
+    "action": {
+      "default_popup": "hello.html",
+      "default_icon": "icon.png"
+    },
+    "content_scripts": [
+    {
+      "js": ["scripts/core-and-studio.js", "scripts/content.js"],
+      "matches": [
+        "https://telescopius.com/telescope-simulator"
+      ],
+      "run_at": "document_idle",
+      "world":"MAIN"
+    }
+  ]
+  }
